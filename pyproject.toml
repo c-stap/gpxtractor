@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gpxtractor"
+version = "0.1.0"
+description = "My custom module with CLI and SQL support"
+authors = [
+    {name = "Charlie Stapylton", email = "278091496+c-stap@users.noreply.github.com"},
+]
+dependencies = [
+    "lxml",
+    "numpy",
+    "pyarrow",
+    "pandas",
+    "duckdb",
+]
+readme = "README.md"
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+cli = ["visidata"]
+
+[project.scripts]
+gpxtractor = "gpxtractor.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["gpxtractor*", "gpxtractor.sql*"]
+
+[tool.setuptools.package-data]
+gpxtractor = ["sql/*.sql"]
