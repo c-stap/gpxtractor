@@ -1,5 +1,5 @@
 """
-GPX, TCX and FIT extraction for Python
+GPX, TCX and FIT data extraction for Python
 ======================================
 
 gpxtractor is a python package to extract data from
@@ -52,7 +52,7 @@ class Activity:
 
     Attributes
     ----------
-    are_records_transformed : bool
+    is_transformed : bool
         initially False, becomes True once either the method
         `transform_records` or `full_transform` is used.
 
@@ -118,7 +118,7 @@ class Activity:
             file.
 
         """
-        self.are_records_transformed = False
+        self.is_transformed = False
         self.file_type = file_type
         self.sport = sport
         self.records = records
@@ -126,7 +126,23 @@ class Activity:
         self.lap_splits = None
 
     def __str__(self):
-        pass
+        records_str = str(self.records.head())
+        km_splits_str = (
+            str(self.km_splits.head()) if self.km_splits is not None else None
+        )
+        lap_splits_str = (
+            str(self.lap_splits.head()) if self.lap_splits is not None else None
+        )
+        return (
+            "Activity(\n"
+            f"  is_transformed: {self.is_transformed}\n"
+            f"  file_type: {self.file_type}\n"
+            f"  sport: {self.sport}\n"
+            f"  records:\n{records_str}\n"
+            f"  km_splits:\n{km_splits_str}\n"
+            f"  lap_splits:\n{lap_splits_str}\n"
+            ")"
+        )
 
     def __repr__(self):
         pass
@@ -136,17 +152,17 @@ class Activity:
         speed if absent and elevation difference, gradient and, in the case of
         running activities, pace.
         """
-        if not self.are_records_transformed:
+        if not self.is_transformed:
             self.records = pa.Table.from_pandas(self.records)
             self.records = transform_data(self.records, self.sport)
-            self.are_records_transformed = True
+            self.is_transformed = True
 
     def compute_lap_splits(self):
         """If there is lap data in the records, updates the lap_splits to a
         DataFrame holding the transformed and aggregated data grouped by lap
         splits. Note: there is no lap data in gpx files.
         """
-        if self.file_type != "GPX" and self.are_records_transformed:
+        if self.file_type != "GPX" and self.is_transformed:
             arrow_table = pa.Table.from_pandas(self.records)
             self.lap_splits = compute_lap_data(arrow_table)
 
@@ -154,15 +170,18 @@ class Activity:
         """Updates km_splits attribute to a DataFrame holding the transformed
         and aggregated data grouped by kilometre splits.
         """
-        if self.are_records_transformed:
+        if self.is_transformed:
             arrow_table = pa.Table.from_pandas(self.records)
             self.km_splits = compute_km_data(arrow_table)
 
     def full_transform(self):
         """Transforms data in records, computes km and lap splits"""
         self.transform_records()
-        self.compute_lap_splits()
-        self.compute_km_splits()
+        if self.is_transformed:
+            arrow_table = pa.Table.from_pandas(self.records)
+            self.km_splits = compute_km_data(arrow_table)
+            if self.file_type != "GPX":
+                self.lap_splits = compute_lap_data(arrow_table)
 
 
 def extract_data(file_path: pathlib.Path) -> Activity:
