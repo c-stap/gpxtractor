@@ -53,7 +53,7 @@ def preprocess_running_data(arrow_table: pa.Table) -> pa.Table:
     return query_table(arrow_table, sql_file)
 
 
-def transform_data(arrow_table: pa.Table, sport: str) -> pd.DataFrame:
+def transform_data(arrow_table: pa.Table, sport: str) -> pa.Table:
     REQUIRED_COLUMNS = {
         "timestamp": pa.timestamp("us"),
         "latitude": pa.float32(),
@@ -78,7 +78,7 @@ def transform_data(arrow_table: pa.Table, sport: str) -> pd.DataFrame:
     else:
         arrow_table = preprocess_data(arrow_table)
 
-    return arrow_table.to_pandas(types_mapper=pd.ArrowDtype)
+    return arrow_table
 
 
 def compute_km_data(arrow_table: pa.Table) -> pd.DataFrame:
@@ -95,4 +95,5 @@ def compute_lap_data(arrow_table: pa.Table) -> pd.DataFrame:
 
 def compute_overall_stats(arrow_table: pa.Table):
     sql_file = "overall_stats.sql"
-    return query_table(arrow_table, sql_file)
+    arrow_table = query_table(arrow_table, sql_file)
+    return arrow_table.to_pandas(types_mapper=pd.ArrowDtype)
