@@ -10,7 +10,7 @@ def _convert_fit_coords_to_deg(coord):
 
 
 def _generate_frame_from_fit(fit_file: pathlib.Path, selected_frames: list):
-    with fitdecode.FitReader(fit_file) as fit:
+    with fitdecode.FitReader(fit_file, check_crc=False) as fit:
         for frame in fit:
             if (
                 frame.frame_type == fitdecode.FIT_FRAME_DATA
