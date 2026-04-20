@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from gpxtractor import extract_data, Activity
-from gpxtractor.utils import _get_file_extensions
+from gpxtractor._utils import _get_file_extensions
 
 
 def _generate_filepaths_in_assets():

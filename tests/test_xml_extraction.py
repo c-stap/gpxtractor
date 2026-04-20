@@ -2,7 +2,7 @@ import os
 import numpy as np
 import pandas as pd
 
-from gpxtractor.xml_extraction import (
+from gpxtractor._xml_extraction import (
     get_sport_from_gpx,
     get_sport_from_tcx,
     extract_gpx,
