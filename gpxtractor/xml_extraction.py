@@ -12,6 +12,16 @@ def _extract_value(
     return datatype(etree_element.text)
 
 
+def _get_tcx_cadence(trkpt_ext: etree.Element, ns: dict) -> int:
+    run_cadence = trkpt_ext.find("tcxtpx:RunCadence", ns)
+    if run_cadence is not None:
+        return int(run_cadence.text)
+    cadence = trkpt_ext.find("tcxtpx:Cadence", ns)
+    if cadence is not None:
+        return int(cadence.text)
+    return 0
+
+
 def get_sport_from_gpx(open_file):
     for line in open_file:
         if "<type>" in line:
@@ -129,7 +139,7 @@ def extract_tcx(tcx_file: str) -> pd.DataFrame:
                 tpx = extensions.find("tcxtpx:TPX", ns)
                 if tpx is not None:
                     speeds.append(_extract_value(tpx.find("tcxtpx:Speed", ns), float))
-                    cads.append(_extract_value(tpx.find("tcxtpx:RunCadence", ns), int))
+                    cads.append(_get_tcx_cadence(tpx, ns))
 
     laps = np.array(laps, dtype=np.uint16)
     lats = np.array(lats, dtype=np.float32)
