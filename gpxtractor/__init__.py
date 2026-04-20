@@ -11,6 +11,8 @@ __version__ = "0.1.0"
 
 import gzip
 import pathlib
+from typing import Optional
+from dataclasses import dataclass, field
 import pyarrow as pa
 import pandas as pd
 
@@ -34,6 +36,7 @@ from gpxtractor.utils import (
 )
 
 
+@dataclass
 class Activity:
     """Stores and manages records and metadata parsed from a gpx, tcx or
     fit file.
@@ -156,41 +159,23 @@ class Activity:
         All of the 3 methods above in the one.
     """
 
-    def __init__(self, file_type: str, sport: str, records: pd.DataFrame):
-        """Initialise the Activity instance
-
-        Parameters
-        ----------
-        file_type : str
-            Can be any of the following: 'GPX', 'TCX' or 'FIT'.
-            Corresponds to the type of the file for which the instance of the
-            class holds data.
-
-        sport : str
-            Is the type of sport as extracted from the file in lower case.
-
-        records : pandas.DataFrame
-            DataFrame holding the records extracted from the gpx, tcx or fit
-            file.
-
-        """
-        self.is_transformed = False
-        self.file_type = file_type
-        self.sport = sport
-        self.start_time = None
-        self.elapsed_time = None
-        self.distance = None
-        self.avg_speed = None
-        self.avg_pace = None
-        self.elevation_gain = None
-        self.elevation_loss = None
-        self.avg_heart_rate = None
-        self.max_heart_rate = None
-        self.avg_cadence = None
-        self.max_cadence = None
-        self.records = records
-        self.km_splits = None
-        self.lap_splits = None
+    file_type: str
+    sport: str
+    records: pd.DataFrame
+    is_transformed: bool = field(default=False, init=False)
+    start_time: Optional[pd.Timestamp] = field(default=None, init=False)
+    elapsed_time: Optional[int] = field(default=None, init=False)
+    distance: Optional[float] = field(default=None, init=False)
+    avg_speed: Optional[float] = field(default=None, init=False)
+    avg_pace: Optional[str] = field(default=None, init=False)
+    elevation_gain: Optional[int] = field(default=None, init=False)
+    elevation_loss: Optional[int] = field(default=None, init=False)
+    avg_heart_rate: Optional[int] = field(default=None, init=False)
+    max_heart_rate: Optional[int] = field(default=None, init=False)
+    avg_cadence: Optional[int] = field(default=None, init=False)
+    max_cadence: Optional[int] = field(default=None, init=False)
+    km_splits: Optional[pd.DataFrame] = field(default=None, init=False)
+    lap_splits: Optional[pd.DataFrame] = field(default=None, init=False)
 
     def __str__(self):
         records_str = str(self.records.head())
@@ -221,9 +206,6 @@ class Activity:
             f"  lap_splits:\n{lap_splits_str}\n"
             ")"
         )
-
-    def __repr__(self):
-        pass
 
     def _transform_records_to_pyarrow(self):
         if not self.is_transformed:
