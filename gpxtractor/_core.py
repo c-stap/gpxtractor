@@ -123,6 +123,7 @@ class Activity:
     elapsed_time: Optional[int] = field(default=None, init=False)
     distance: Optional[float] = field(default=None, init=False)
     avg_speed: Optional[float] = field(default=None, init=False)
+    max_speed: Optional[float] = field(default=None, init=False)
     avg_pace: Optional[str] = field(default=None, init=False)
     elevation_gain: Optional[int] = field(default=None, init=False)
     elevation_loss: Optional[int] = field(default=None, init=False)
@@ -150,6 +151,7 @@ class Activity:
             f"  elapsed_time: {self.elapsed_time}\n"
             f"  distance: {self.distance}\n"
             f"  avg_speed: {self.avg_speed}\n"
+            f"  max_speed: {self.max_speed}\n"
             f"  avg_pace: {self.avg_pace}\n"
             f"  elevation_gain: {self.elevation_gain}\n"
             f"  elevation_loss: {self.elevation_loss}\n"
@@ -172,6 +174,7 @@ class Activity:
             self.elapsed_time = int(stats["elapsed_time"].at[0])
             self.distance = float(stats["distance"].at[0])
             self.avg_speed = float(stats["avg_speed"].at[0])
+            self.max_speed = float(stats["max_speed"].at[0])
             self.avg_pace = stats["avg_pace"].at[0]
             self.elevation_gain = int(stats["elevation_gain"].at[0])
             self.elevation_loss = int(stats["elevation_loss"].at[0])

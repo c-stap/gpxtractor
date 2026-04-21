@@ -5,6 +5,7 @@ WITH overall_stats_stage1 AS (
         date_diff('second', start_time, end_time)::INT as elapsed_time,
         ROUND(MAX(distance), 2)::FLOAT AS total_distance,
         ROUND((total_distance / elapsed_time) * 3600, 2)::FLOAT AS avg_speed,
+        MAX(speed)::FLOAT AS max_speed,
         printf(
             '%02d:%02d',
             CAST(FLOOR(60 / avg_speed) AS INT),
@@ -30,6 +31,7 @@ SELECT
     elapsed_time,
     total_distance AS distance,
     avg_speed,
+    max_speed,
     avg_pace,
     elevation_gain,
     elevation_loss,
