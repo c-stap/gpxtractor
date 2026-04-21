@@ -1,13 +1,10 @@
-import numpy as np
-import pandas as pd
-
 from gpxtractor._xml_extraction import (
     get_sport_from_gpx,
     get_sport_from_tcx,
     extract_gpx,
     extract_tcx,
 )
-from tests.helpers import _validate_extracted_dataframe
+from tests.helpers import _validate_gpx_extracted_df, _validate_tcx_fit_extracted_df
 
 
 def _get_sport_helper_func(filepath, func):
@@ -26,50 +23,12 @@ def test_get_sport_from_tcx(tcx_filepaths):
 
 
 def test_extract_gpx(gpx_filepaths):
-    cols = [
-        "timestamp",
-        "latitude",
-        "longitude",
-        "altitude",
-        "heart_rate",
-        "cadence",
-    ]
-    col_dtypes = [
-        pd.DatetimeTZDtype,
-        np.float32,
-        np.float32,
-        np.float32,
-        np.uint8,
-        np.uint8,
-    ]
     for filepath in gpx_filepaths:
         df = extract_gpx(filepath)
-        _validate_extracted_dataframe(df, cols, col_dtypes, cols[:3])
+        _validate_gpx_extracted_df(df)
 
 
 def test_extract_tcx(tcx_filepaths):
-    cols = [
-        "lap",
-        "timestamp",
-        "latitude",
-        "longitude",
-        "distance",
-        "speed",
-        "altitude",
-        "heart_rate",
-        "cadence",
-    ]
-    col_dtypes = [
-        np.uint16,
-        pd.DatetimeTZDtype,
-        np.float32,
-        np.float32,
-        np.float32,
-        np.float32,
-        np.float32,
-        np.uint8,
-        np.uint8,
-    ]
     for filepath in tcx_filepaths:
         df = extract_tcx(filepath)
-        _validate_extracted_dataframe(df, cols, col_dtypes, cols[:4])
+        _validate_tcx_fit_extracted_df(df)
