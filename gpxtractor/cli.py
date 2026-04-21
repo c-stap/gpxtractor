@@ -3,6 +3,7 @@
 import argparse
 import visidata
 
+import gpxtractor
 from gpxtractor import extract_data
 
 
@@ -10,11 +11,11 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Display a GPX or TCX file as a dataframe in visidata."
     )
-    parser.add_argument("file", type=str, help="")
+    parser.add_argument("file", type=str, nargs="?", help="")
     parser.add_argument(
         "--raw",
         action="store_true",
-        help="Display the raw data as in the file with no transformation.",
+        help="Display the data from the file with no transformation in a table.",
     )
     parser.add_argument(
         "--sport",
@@ -22,21 +23,33 @@ def parse_args():
         help="Print the sport or activity type of the file.",
     )
     parser.add_argument(
-        "--km_splits",
+        "--kms",
         action="store_true",
         help="Display aggregated stats grouped by kilometer.",
     )
     parser.add_argument(
-        "--lap_splits",
+        "--laps",
         action="store_true",
         help="Display aggregated stats grouped by lap.",
     )
+    parser.add_argument(
+        "--version",
+        action="store_true",
+        help="Display version and exit.",
+    )
 
-    return parser.parse_args()
+    return parser, parser.parse_args()
 
 
 def main():
-    args = parse_args()
+    parser, args = parse_args()
+
+    if args.version:
+        print(f"gpxtractor v{gpxtractor.__version__}")
+        return
+
+    if not args.file and not args.version:
+        parser.error("the following arguments are required: file")
 
     activity = extract_data(file_path=args.file)
     if args.raw:
@@ -47,9 +60,9 @@ def main():
 
     if args.sport:
         print(activity.sport)
-    elif args.km_splits:
+    elif args.kms:
         visidata.vd.view_pandas(df=activity.km_splits)
-    elif args.lap_splits:
+    elif args.laps:
         if activity.lap_splits is not None:
             visidata.vd.view_pandas(df=activity.lap_splits)
         else:
