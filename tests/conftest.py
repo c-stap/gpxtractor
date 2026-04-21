@@ -1,5 +1,6 @@
 import os
 import pytest
+import pyarrow as pa
 
 
 asset_dir = "assets"
@@ -52,3 +53,25 @@ def run_filepaths():
 @pytest.fixture
 def ride_filepaths():
     return _generate_filepaths_from_dir(rides_dir)
+
+
+@pytest.fixture
+def null_pyarrow_table():
+    empty_table = pa.table(
+        {
+            "foo": pa.array([None, None, None], type=pa.uint8()),
+            "bar": pa.array([None, None, None], type=pa.uint8()),
+        }
+    )
+    return empty_table
+
+
+@pytest.fixture
+def filled_pyarrow_table():
+    empty_table = pa.table(
+        {
+            "foo": pa.array([12, 15, 177], type=pa.uint8()),
+            "bar": pa.array([178, 186, 190], type=pa.uint8()),
+        }
+    )
+    return empty_table
