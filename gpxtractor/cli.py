@@ -5,17 +5,27 @@ import visidata
 
 import gpxtractor
 from gpxtractor import extract_data
+from gpxtractor._cli_dash import cli_dashboard
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Display a GPX or TCX file as a dataframe in visidata."
+        description="""
+            Data extraction and transformation for gpx, tcx and fit.
+            By default, presents an overview of the data with aggregate stats
+            and data visuals.
+            """
     )
     parser.add_argument("file", type=str, nargs="?", help="")
     parser.add_argument(
         "--raw",
         action="store_true",
-        help="Display the data from the file with no transformation in a table.",
+        help="Display the data as extracted in visidata.",
+    )
+    parser.add_argument(
+        "--transform",
+        action="store_true",
+        help="Display the data transformed in visidata.",
     )
     parser.add_argument(
         "--sport",
@@ -25,12 +35,12 @@ def parse_args():
     parser.add_argument(
         "--kms",
         action="store_true",
-        help="Display aggregated stats grouped by kilometer.",
+        help="Display aggregated stats grouped by kilometer in visidata.",
     )
     parser.add_argument(
         "--laps",
         action="store_true",
-        help="Display aggregated stats grouped by lap.",
+        help="Display aggregated stats grouped by lap in visidata.",
     )
     parser.add_argument(
         "--version",
@@ -60,6 +70,8 @@ def main():
 
     if args.sport:
         print(activity.sport)
+    elif args.transform:
+        visidata.vd.view_pandas(df=activity.records)
     elif args.kms:
         visidata.vd.view_pandas(df=activity.km_splits)
     elif args.laps:
@@ -68,7 +80,7 @@ def main():
         else:
             print("No laps in file")
     else:
-        visidata.vd.view_pandas(df=activity.records)
+        cli_dashboard(activity)
 
 
 if __name__ == "__main__":
