@@ -1,4 +1,6 @@
 import itertools
+from datetime import timedelta
+import numpy as np
 import pandas as pd
 
 import gpxtractor
@@ -6,6 +8,8 @@ import gpxtractor
 
 EMPTY_BRAILLE_CHAR = 0x2800
 FULL_BRAILLE_CHAR = 0x28FF
+
+FULL_BLOCK_CHAR = 0x2588
 
 TITLE = """
 
@@ -32,9 +36,9 @@ def braille_char(left: int, right: int) -> str:
     for dot, position in zip(left_dots + right_dots, dot_positions):
         dots[position] = dot
 
-    value = sum((1 << i) for i, d in enumerate(dots) if d)
+    bit_diff = sum((1 << i) for i, d in enumerate(dots) if d)
 
-    return chr(EMPTY_BRAILLE_CHAR + value)
+    return chr(EMPTY_BRAILLE_CHAR + bit_diff)
 
 
 def braille_columns(data: list[int]) -> str:
@@ -83,13 +87,13 @@ def print_colour(string, colour):
             print(string)
 
 
-def chart(data: pd.Series, colour):
+def area_chart(data: pd.Series, colour):
     if (data == 0).all():
         return
 
     N_BARS = 200
     n_data_points = len(data)
-    if n_data_points > 200:
+    if n_data_points > N_BARS:
         step = n_data_points // N_BARS
     else:
         step = 1
@@ -99,10 +103,65 @@ def chart(data: pd.Series, colour):
     transformed_data = []
     if max_val != 0:
         for item in data.iloc[::step]:
-            item_transformed = int((item - miny_buffer) / (max_val - miny_buffer) * 40)
+            item_transformed = 0
+            if item is not None and ~np.isnan(item):
+                item_transformed = int(
+                    (item - miny_buffer) / (max_val - miny_buffer) * 40
+                )
             transformed_data.append(item_transformed)
 
     print_colour(braille_columns(transformed_data), colour)
+
+
+def block_char(x: int) -> str:
+    x = min(x, 8)
+    x = max(x, 0)
+    block = " "
+    if x != 0:
+        bit_diff = 8 - x
+        block = chr(FULL_BLOCK_CHAR + bit_diff)
+    return block
+
+
+def horizontal_bar(value, total, char_length: int):
+    if char_length > 0 and isinstance(char_length, int):
+        if value <= total:
+            # Block characters allow for x8 definition
+            full_def_length = char_length * 8
+            transformed_value = int(round(value / total * full_def_length))
+            n_full_blocks = transformed_value // 8
+            extra_char = block_char(transformed_value % 8)
+            empty_spaces = " " * (char_length - n_full_blocks - 1)
+            return chr(FULL_BLOCK_CHAR) * n_full_blocks + extra_char + empty_spaces
+        else:
+            raise ValueError(
+                "value param must be equal or less than equal to total param"
+            )
+    else:
+        raise ValueError("char_length must be integer superior to 0")
+
+
+def print_subtitle(subtitle: str):
+    print(f"\n{subtitle}\n" + "=" * len(subtitle))
+
+
+def print_summary(activity: gpxtractor.Activity):
+    print_subtitle("ACTIVITY SUMMARY")
+    print(f"Sport:              {activity.sport}")
+    print(f"Start time:         {activity.start_time}")
+    print(f"Distance:           {activity.distance:.2f} km")
+    print(f"Elapsed Time:       {str(timedelta(seconds=activity.elapsed_time))}")
+    if activity.sport == "running":
+        print(f"Average pace:       {activity.avg_pace} min/km")
+    print(f"Average speed:      {activity.avg_speed:.2f} km/h")
+    print(f"Maximum speed:      {activity.max_speed:.2f} km/h")
+    if activity.avg_heart_rate != 0:
+        print(f"Average heart rate: {activity.avg_heart_rate} bpm")
+        print(f"Maximum heart rate: {activity.max_heart_rate} bpm")
+    if activity.avg_cadence != 0:
+        cadence_unit = "spm" if activity.sport == "running" else "rpm"
+        print(f"Average cadence:    {activity.avg_cadence} {cadence_unit}")
+        print(f"Maximum cadence:    {activity.max_cadence} {cadence_unit}")
 
 
 def cli_dashboard(activity: gpxtractor.Activity):
@@ -110,19 +169,16 @@ def cli_dashboard(activity: gpxtractor.Activity):
         activity.full_transform()
 
     print(TITLE)
+    print_summary(activity)
 
-    print("Elevation")
-    print("=========")
-    chart(activity.records["altitude"], "grey")
+    print_subtitle("Elevation")
+    area_chart(activity.records["altitude"], "grey")
 
-    print("Speed")
-    print("=====")
-    chart(activity.records["speed"], "cyan")
+    print_subtitle("Speed")
+    area_chart(activity.records["speed"], "cyan")
 
-    print("Heart Rate")
-    print("==========")
-    chart(activity.records["heart_rate"], "pink")
+    print_subtitle("Heart Rate")
+    area_chart(activity.records["heart_rate"], "pink")
 
-    print("Cadence")
-    print("=======")
-    chart(activity.records["cadence"], "green")
+    print_subtitle("Cadence")
+    area_chart(activity.records["cadence"], "green")
