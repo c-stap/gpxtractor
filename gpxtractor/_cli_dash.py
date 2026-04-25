@@ -2,6 +2,8 @@ import itertools
 from datetime import timedelta
 import numpy as np
 import pandas as pd
+from rich.console import Console
+from rich.table import Table
 
 import gpxtractor
 
@@ -141,6 +143,59 @@ def horizontal_bar(value, total, char_length: int):
         raise ValueError("char_length must be integer superior to 0")
 
 
+def splits_table(df: pd.DataFrame, sport: str):
+    table_title = "Laps" if "lap" in df.columns else "Kilometre Splits"
+    table = Table(title=table_title)
+
+    headers = [
+        ["Split", "right", None],
+        ["Distance\n(km)", "right", None],
+        ["Average Speed\n(km/h)", "left", "blue"],
+        ["Elevation Gain\n(m)", "left", None],
+        ["Elevation Loss\n(m)", "left", None],
+        ["Average HR\n(bpm)", "left", "red"],
+        ["Average Cadence\n(rpm)", "left", "green"],
+    ]
+    if sport == "running":
+        headers[2][0] = "Average Pace\n(min/km)"
+        headers[-1][0] = "Average Cadence\n(spm)"
+
+    for col in headers:
+        table.add_column(col[0], justify=col[1], style=col[2])
+
+    # key: column name in df, value: formatting for table
+    columns_to_include = {
+        "avg_speed_kph": ">6.2f",
+        "elevation_gain": ">4",
+        "elevation_loss": ">4",
+        "avg_hr": ">3",
+        "avg_cadence": ">3",
+    }
+
+    max_values = {col: df[col].max() for col in columns_to_include}
+
+    for row in df.itertuples():
+        split = str(row[1])
+        distance = f"{round(row.distance, 2):.2f}"
+        row_elements = [split, distance]
+        for col, fmt in columns_to_include.items():
+            value = getattr(row, col)
+
+            formatted_value = f"{value:{fmt}}"
+            if col == "avg_speed_kph" and sport == "running":
+                formatted_value = f"{row.avg_pace:>6}"
+
+            element_string = "No Data"
+            if value is not None and max_values[col] > 0:
+                bar_str = horizontal_bar(value, max_values[col], 12)
+                element_string = formatted_value + " " + bar_str
+            row_elements.append(element_string)
+
+        table.add_row(*row_elements)
+
+    return table
+
+
 def print_subtitle(subtitle: str):
     print(f"\n{subtitle}\n" + "=" * len(subtitle))
 
@@ -182,3 +237,10 @@ def cli_dashboard(activity: gpxtractor.Activity):
 
     print_subtitle("Cadence")
     area_chart(activity.records["cadence"], "green")
+
+    km_table = splits_table(activity.km_splits, activity.sport)
+    lap_table = splits_table(activity.lap_splits, activity.sport)
+
+    console = Console()
+    console.print(km_table)
+    console.print(lap_table)
