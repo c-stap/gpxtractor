@@ -3,6 +3,7 @@ from datetime import timedelta
 import numpy as np
 import pandas as pd
 from rich.console import Console
+from rich.text import Text
 from rich.table import Table
 
 import gpxtractor
@@ -63,33 +64,13 @@ def braille_columns(data: list[int]) -> str:
             else:
                 line.append(braille_char(left, right))
 
+        line = "".join(char for char in line)
         lines.insert(0, line)
         amount_plotted += 4
-    return "\n".join("".join(char for char in line) for line in lines)
+    return lines
 
 
-def braille_cols_with_axes(data: list[int]):
-    lines = braille_columns(data)
-    return "\n".join("".join(char for char in line) for line in lines)
-
-
-def print_in_rgb(string: str, r: int, g: int, b: int) -> None:
-    print(f"\033[38;2;{r};{g};{b}m{string}\033[0m")
-
-
-def print_colour(string, colour):
-    match colour.lower():
-        case "cyan":
-            print_in_rgb(string, 8, 199, 247)
-        case "pink":
-            print_in_rgb(string, 242, 188, 224)
-        case "green":
-            print_in_rgb(string, 130, 230, 194)
-        case _:
-            print(string)
-
-
-def area_chart(data: pd.Series, colour):
+def area_chart(data: pd.Series):
     if (data == 0).all():
         return
 
@@ -112,7 +93,7 @@ def area_chart(data: pd.Series, colour):
                 )
             transformed_data.append(item_transformed)
 
-    print_colour(braille_columns(transformed_data), colour)
+    return braille_columns(transformed_data)
 
 
 def block_char(x: int) -> str:
@@ -219,28 +200,34 @@ def print_summary(activity: gpxtractor.Activity):
         print(f"Maximum cadence:    {activity.max_cadence} {cadence_unit}")
 
 
+def draw_area_chart(data: pd.Series, title: str, colour: str, console: Console):
+    title = Text(title, style="bold")
+    console.print(title)
+    lines = area_chart(data)
+    for line in lines:
+        text = Text.assemble("│", (line, colour))
+        console.print(text)
+    console.print("└" + ("┬" + "─" * 20) * 5)
+
+
 def cli_dashboard(activity: gpxtractor.Activity):
     if not activity.is_transformed:
         activity.full_transform()
 
-    print(TITLE)
+    console = Console()
+    console.print(TITLE, style="blue")
     print_summary(activity)
 
-    print_subtitle("Elevation")
-    area_chart(activity.records["altitude"], "grey")
+    draw_area_chart(activity.records["altitude"], "Elevation", "white", console)
 
-    print_subtitle("Speed")
-    area_chart(activity.records["speed"], "cyan")
+    draw_area_chart(activity.records["speed"], "Speed", "blue", console)
 
-    print_subtitle("Heart Rate")
-    area_chart(activity.records["heart_rate"], "pink")
+    draw_area_chart(activity.records["heart_rate"], "Heart Rate", "red", console)
 
-    print_subtitle("Cadence")
-    area_chart(activity.records["cadence"], "green")
+    draw_area_chart(activity.records["cadence"], "Cadence", "green", console)
 
     km_table = splits_table(activity.km_splits, activity.sport)
     lap_table = splits_table(activity.lap_splits, activity.sport)
 
-    console = Console()
     console.print(km_table)
     console.print(lap_table)
