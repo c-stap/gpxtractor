@@ -1,8 +1,10 @@
+from io import StringIO
 import itertools
 from datetime import timedelta
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_integer_dtype
+import click
 from rich.console import Console
 from rich.text import Text
 from rich.table import Table
@@ -124,14 +126,12 @@ def draw_area_chart(
             text = Text.assemble(f"{' ' * ytick_nchar}│", (line, colour))
             if i == 0:
                 text = Text.assemble(f"{formatted_maxy}│", (line, colour))
-            elif i == len(lines) - 1:
-                text = Text.assemble(f"{formatted_miny}│", (line, colour))
             console.print(text)
-        console.print((" " * ytick_nchar) + "└" + ("┬" + "─" * 19) * 5)
+        console.print(f"{formatted_miny}└" + ("┬" + "─" * 19) * 5, highlight=False)
 
         xticks = []
         start_x = df[x].at[0]
-        for xtick in df[x].iloc[step::step * 40]:
+        for xtick in df[x].iloc[step :: step * 40]:
             if isinstance(xtick, pd.Timestamp):
                 time_diff = xtick - start_x
                 xtick = time_diff
@@ -249,13 +249,49 @@ def print_summary(activity: gpxtractor.Activity):
         print(f"Maximum cadence:    {activity.max_cadence} {cadence_unit}")
 
 
+def summary_table(activity: gpxtractor.Activity):
+    cadence_unit = "spm" if activity.sport == "running" else "rpm"
+    stats = [
+        ["Sport", activity.sport],
+        ["Start time", str(activity.start_time)],
+        ["Distance", f"{activity.distance:.2f} km"],
+        ["Elapsed Time", str(timedelta(seconds=activity.elapsed_time))],
+        ["Elevation Gain", f"{activity.elevation_gain} m"],
+        ["Elevation Loss", f"{activity.elevation_loss} m"],
+        ["Average pace", f"{activity.avg_pace} min/km"],
+        ["Average speed", f"{activity.avg_speed:.2f} km/h"],
+        ["Maximum speed", f"{activity.max_speed:.2f} km/h"],
+    ]
+    if activity.sport in ["cycling", "biking"]:
+        stats.pop(4)
+    if activity.avg_heart_rate != 0:
+        stats += [
+            ("Average heart rate", f"{activity.avg_heart_rate} bpm"),
+            ("Maximum heart rate", f"{activity.max_heart_rate} bpm"),
+        ]
+
+    if activity.avg_cadence != 0:
+        stats += [
+            ("Average cadence", f"{activity.avg_cadence} {cadence_unit}"),
+            ("Maximum cadence", f"{activity.max_cadence} {cadence_unit}"),
+        ]
+    table = Table(show_header=False)
+    table.add_column(justify="right", style="bold")
+    table.add_column()
+    for stat in stats:
+        table.add_row(*stat)
+    return table
+
+
 def cli_dashboard(activity: gpxtractor.Activity):
     if not activity.is_transformed:
         activity.full_transform()
 
-    console = Console()
-    console.print(TITLE, style="blue")
-    print_summary(activity)
+    output = StringIO()
+    console = Console(file=output, force_terminal=True)
+    console.print(TITLE, style="blue", justify="center")
+    summary = summary_table(activity)
+    console.print(summary, justify="center")
 
     cadence_unit = "spm" if activity.sport == "running" else "rpm"
     draw_area_chart(
@@ -292,8 +328,10 @@ def cli_dashboard(activity: gpxtractor.Activity):
     )
 
     km_table = splits_table(activity.km_splits, activity.sport)
-    lap_table = splits_table(activity.lap_splits, activity.sport)
-
     console.print("\n")
-    console.print(km_table)
-    console.print(lap_table)
+    console.print(km_table, justify="center")
+    if activity.lap_splits is not None:
+        lap_table = splits_table(activity.lap_splits, activity.sport)
+        console.print(lap_table, justify="center")
+
+    click.echo_via_pager(output.getvalue())
