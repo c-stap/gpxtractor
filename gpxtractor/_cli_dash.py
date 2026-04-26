@@ -2,6 +2,7 @@ import itertools
 from datetime import timedelta
 import numpy as np
 import pandas as pd
+from pandas.api.types import is_integer_dtype
 from rich.console import Console
 from rich.text import Text
 from rich.table import Table
@@ -70,30 +71,78 @@ def braille_columns(data: list[int]) -> str:
     return lines
 
 
-def area_chart(data: pd.Series):
+def area_chart(data: pd.Series, miny, maxy, height=40, width=200):
     if (data == 0).all():
         return
-
-    N_BARS = 200
     n_data_points = len(data)
-    if n_data_points > N_BARS:
-        step = n_data_points // N_BARS
-    else:
-        step = 1
-    max_val = data.max()
-    data_range = data.max() - data.min()
-    miny_buffer = data.min() - data_range * 0.05
+    step = 1
+    if n_data_points > width:
+        step = int(round(n_data_points / width))
+    data_range = maxy - miny
+    miny_buffer = miny - data_range * 0.05
     transformed_data = []
-    if max_val != 0:
+    if maxy != 0:
         for item in data.iloc[::step]:
             item_transformed = 0
             if item is not None and ~np.isnan(item):
                 item_transformed = int(
-                    (item - miny_buffer) / (max_val - miny_buffer) * 40
+                    (item - miny_buffer) / (maxy - miny_buffer) * height
                 )
             transformed_data.append(item_transformed)
 
-    return braille_columns(transformed_data)
+    return step, braille_columns(transformed_data)
+
+
+def draw_area_chart(
+    df: pd.DataFrame,
+    y: str,
+    title: str,
+    unit: str,
+    colour: str,
+    console: Console,
+    x: str = "timestamp",
+    ytick_nchar: int = 6,
+    ytick_decimals: int = 1,
+):
+    data = df[y]
+    if not (data == 0).all() and ~data.isna().all():
+        maxy = data.max()
+        miny = data.min()
+        formatted_miny = f"{miny:>{ytick_nchar}.{ytick_decimals}f}"
+        formatted_maxy = f"{maxy:>{ytick_nchar}.{ytick_decimals}f}"
+        if is_integer_dtype(data):
+            formatted_miny = f"{miny:>{ytick_nchar}}"
+            formatted_maxy = f"{maxy:>{ytick_nchar}}"
+
+        title = Text("\n" + title, style="bold")
+        unit = Text(unit)
+        console.print(title)
+        console.print(unit)
+
+        step, lines = area_chart(data, miny, maxy)
+        for i, line in enumerate(lines):
+            text = Text.assemble(f"{' ' * ytick_nchar}│", (line, colour))
+            if i == 0:
+                text = Text.assemble(f"{formatted_maxy}│", (line, colour))
+            elif i == len(lines) - 1:
+                text = Text.assemble(f"{formatted_miny}│", (line, colour))
+            console.print(text)
+        console.print((" " * ytick_nchar) + "└" + ("┬" + "─" * 19) * 5)
+
+        xticks = []
+        start_x = df[x].at[0]
+        for xtick in df[x].iloc[step::step * 40]:
+            if isinstance(xtick, pd.Timestamp):
+                time_diff = xtick - start_x
+                xtick = time_diff
+                hours = time_diff.components.hours
+                minutes = time_diff.components.minutes
+                seconds = time_diff.components.seconds
+                xtick = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+                xticks.append(xtick)
+        xticks_str = " " * (ytick_nchar + 1)
+        xticks_str += "".join(tick + " " * (20 - len(tick)) for tick in xticks)
+        console.print(xticks_str, highlight=False)
 
 
 def block_char(x: int) -> str:
@@ -200,16 +249,6 @@ def print_summary(activity: gpxtractor.Activity):
         print(f"Maximum cadence:    {activity.max_cadence} {cadence_unit}")
 
 
-def draw_area_chart(data: pd.Series, title: str, colour: str, console: Console):
-    title = Text(title, style="bold")
-    console.print(title)
-    lines = area_chart(data)
-    for line in lines:
-        text = Text.assemble("│", (line, colour))
-        console.print(text)
-    console.print("└" + ("┬" + "─" * 20) * 5)
-
-
 def cli_dashboard(activity: gpxtractor.Activity):
     if not activity.is_transformed:
         activity.full_transform()
@@ -218,16 +257,43 @@ def cli_dashboard(activity: gpxtractor.Activity):
     console.print(TITLE, style="blue")
     print_summary(activity)
 
-    draw_area_chart(activity.records["altitude"], "Elevation", "white", console)
-
-    draw_area_chart(activity.records["speed"], "Speed", "blue", console)
-
-    draw_area_chart(activity.records["heart_rate"], "Heart Rate", "red", console)
-
-    draw_area_chart(activity.records["cadence"], "Cadence", "green", console)
+    cadence_unit = "spm" if activity.sport == "running" else "rpm"
+    draw_area_chart(
+        df=activity.records,
+        y="altitude",
+        title="Elevation",
+        unit="m",
+        colour="white",
+        console=console,
+    )
+    draw_area_chart(
+        df=activity.records,
+        y="speed",
+        title="Speed",
+        unit="km/h",
+        colour="blue",
+        console=console,
+    )
+    draw_area_chart(
+        df=activity.records,
+        y="heart_rate",
+        title="Heart Rate",
+        unit="bpm",
+        colour="red",
+        console=console,
+    )
+    draw_area_chart(
+        df=activity.records,
+        y="cadence",
+        title="Cadence",
+        unit=cadence_unit,
+        colour="green",
+        console=console,
+    )
 
     km_table = splits_table(activity.km_splits, activity.sport)
     lap_table = splits_table(activity.lap_splits, activity.sport)
 
+    console.print("\n")
     console.print(km_table)
     console.print(lap_table)
