@@ -134,7 +134,7 @@ def draw_area_chart(
 
         xticks = []
         start_x = df[x].at[0]
-        for xtick in df[x].iloc[step :: step * 40]:
+        for xtick in df[x].iloc[step : step * 200 : step * 40]:
             if isinstance(xtick, pd.Timestamp):
                 time_diff = xtick - start_x
                 xtick = time_diff
