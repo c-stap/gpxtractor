@@ -95,17 +95,20 @@ def area_chart(data: pd.Series, miny, maxy, height=40, width=200):
     return step, braille_columns(transformed_data)
 
 
+def trail_blanks(text: str, line_nchar: int) -> str:
+    return chr(EMPTY_BRAILLE_CHAR) * (line_nchar - len(text))
+
+
 def draw_area_chart(
     df: pd.DataFrame,
     y: str,
     title: str,
     unit: str,
     colour: str,
-    console: Console,
     x: str = "timestamp",
     ytick_nchar: int = 6,
     ytick_decimals: int = 1,
-):
+) -> Text:
     data = df[y]
     if not (data == 0).all() and ~data.isna().all():
         maxy = data.max()
@@ -116,18 +119,18 @@ def draw_area_chart(
             formatted_miny = f"{miny:>{ytick_nchar}}"
             formatted_maxy = f"{maxy:>{ytick_nchar}}"
 
-        title = Text("\n" + title, style="bold")
-        unit = Text(unit)
-        console.print(title)
-        console.print(unit)
+        output = Text()
+        title = Text("\n" + title + trail_blanks(title, 100 + ytick_nchar + 1), style="bold")
+        output.append(title)
+        output.append('\n' + unit + trail_blanks(unit, 100 + ytick_nchar + 1))
 
         step, lines = area_chart(data, miny, maxy)
         for i, line in enumerate(lines):
-            text = Text.assemble(f"{' ' * ytick_nchar}│", (line, colour))
+            text = Text.assemble(f"\n{' ' * ytick_nchar}│", (line, colour))
             if i == 0:
-                text = Text.assemble(f"{formatted_maxy}│", (line, colour))
-            console.print(text)
-        console.print(f"{formatted_miny}└" + ("┬" + "─" * 19) * 5, highlight=False)
+                text = Text.assemble(f"\n{formatted_maxy}│", (line, colour))
+            output.append(text)
+        output.append(f"\n{formatted_miny}└" + ("┬" + "─" * 19) * 5)
 
         xticks = []
         start_x = df[x].at[0]
@@ -140,9 +143,10 @@ def draw_area_chart(
                 seconds = time_diff.components.seconds
                 xtick = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
                 xticks.append(xtick)
-        xticks_str = " " * (ytick_nchar + 1)
-        xticks_str += "".join(tick + " " * (20 - len(tick)) for tick in xticks)
-        console.print(xticks_str, highlight=False)
+        xticks_str = chr(EMPTY_BRAILLE_CHAR) * (ytick_nchar + 1)
+        xticks_str += "".join(tick + chr(EMPTY_BRAILLE_CHAR) * (20 - len(tick)) for tick in xticks)
+        output.append("\n" + xticks_str)
+        return output
 
 
 def block_char(x: int) -> str:
@@ -155,7 +159,7 @@ def block_char(x: int) -> str:
     return block
 
 
-def horizontal_bar(value, total, char_length: int):
+def horizontal_bar(value, total, char_length: int) -> str:
     if char_length > 0 and isinstance(char_length, int):
         if value <= total:
             # Block characters allow for x8 definition
@@ -173,7 +177,7 @@ def horizontal_bar(value, total, char_length: int):
         raise ValueError("char_length must be integer superior to 0")
 
 
-def splits_table(df: pd.DataFrame, sport: str):
+def splits_table(df: pd.DataFrame, sport: str) -> Table:
     table_title = "Laps" if "lap" in df.columns else "Kilometre Splits"
     table = Table(title=table_title)
 
@@ -226,30 +230,7 @@ def splits_table(df: pd.DataFrame, sport: str):
     return table
 
 
-def print_subtitle(subtitle: str):
-    print(f"\n{subtitle}\n" + "=" * len(subtitle))
-
-
-def print_summary(activity: gpxtractor.Activity):
-    print_subtitle("ACTIVITY SUMMARY")
-    print(f"Sport:              {activity.sport}")
-    print(f"Start time:         {activity.start_time}")
-    print(f"Distance:           {activity.distance:.2f} km")
-    print(f"Elapsed Time:       {str(timedelta(seconds=activity.elapsed_time))}")
-    if activity.sport == "running":
-        print(f"Average pace:       {activity.avg_pace} min/km")
-    print(f"Average speed:      {activity.avg_speed:.2f} km/h")
-    print(f"Maximum speed:      {activity.max_speed:.2f} km/h")
-    if activity.avg_heart_rate != 0:
-        print(f"Average heart rate: {activity.avg_heart_rate} bpm")
-        print(f"Maximum heart rate: {activity.max_heart_rate} bpm")
-    if activity.avg_cadence != 0:
-        cadence_unit = "spm" if activity.sport == "running" else "rpm"
-        print(f"Average cadence:    {activity.avg_cadence} {cadence_unit}")
-        print(f"Maximum cadence:    {activity.max_cadence} {cadence_unit}")
-
-
-def summary_table(activity: gpxtractor.Activity):
+def summary_table(activity: gpxtractor.Activity) -> Table:
     cadence_unit = "spm" if activity.sport == "running" else "rpm"
     stats = [
         ["Sport", activity.sport],
@@ -294,38 +275,38 @@ def cli_dashboard(activity: gpxtractor.Activity):
     console.print(summary, justify="center")
 
     cadence_unit = "spm" if activity.sport == "running" else "rpm"
-    draw_area_chart(
-        df=activity.records,
-        y="altitude",
-        title="Elevation",
-        unit="m",
-        colour="white",
-        console=console,
+    elev_char = draw_area_chart(
+        activity.records,
+        "altitude",
+        "Elevation",
+        "m",
+        "white",
     )
-    draw_area_chart(
-        df=activity.records,
-        y="speed",
-        title="Speed",
-        unit="km/h",
-        colour="blue",
-        console=console,
+    speed_chart = draw_area_chart(
+        activity.records,
+        "speed",
+        "Speed",
+        "km/h",
+        "blue",
     )
-    draw_area_chart(
-        df=activity.records,
-        y="heart_rate",
-        title="Heart Rate",
-        unit="bpm",
-        colour="red",
-        console=console,
+    hr_chart = draw_area_chart(
+        activity.records,
+        "heart_rate",
+        "Heart Rate",
+        "bpm",
+        "red",
     )
-    draw_area_chart(
-        df=activity.records,
-        y="cadence",
-        title="Cadence",
-        unit=cadence_unit,
-        colour="green",
-        console=console,
+    cadence_chart = draw_area_chart(
+        activity.records,
+        "cadence",
+        "Cadence",
+        cadence_unit,
+        "green",
     )
+    console.print(elev_char, highlight=False, justify="center")
+    console.print(speed_chart, highlight=False, justify="center")
+    console.print(hr_chart, highlight=False, justify="center")
+    console.print(cadence_chart, highlight=False, justify="center")
 
     km_table = splits_table(activity.km_splits, activity.sport)
     console.print("\n")
