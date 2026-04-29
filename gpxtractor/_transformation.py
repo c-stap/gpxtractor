@@ -97,3 +97,19 @@ def compute_overall_stats(arrow_table: pa.Table):
     sql_file = "overall_stats.sql"
     arrow_table = query_table(arrow_table, sql_file)
     return arrow_table.to_pandas(types_mapper=pd.ArrowDtype)
+
+
+# === Specific transformation functions for the TUI ===
+def _bin_records(df: pd.DataFrame, sql_file: str, n_bins: int) -> pd.DataFrame:
+    sql_path = files("gpxtractor.sql").joinpath(sql_file)
+    safe_table_name = get_var_name(df)
+    sql_query = sql_path.read_text().format(table_name=safe_table_name, n_bins=n_bins)
+    return duckdb.sql(sql_query).df()
+
+
+def bin_records_by_distance(df: pd.DataFrame, n_bins: int) -> pd.DataFrame:
+    return _bin_records(df, "tui_graph_x_distance.sql", n_bins)
+
+
+def bin_records_by_time(df: pd.DataFrame, n_bins: int) -> pd.DataFrame:
+    return _bin_records(df, "tui_graph_x_time.sql", n_bins)
