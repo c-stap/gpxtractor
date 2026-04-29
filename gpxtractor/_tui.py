@@ -281,7 +281,7 @@ def summary_table(activity: gpxtractor.Activity) -> Table:
         ["Maximum speed", f"{activity.max_speed:.2f} km/h"],
     ]
     if activity.sport in ["cycling", "biking"]:
-        stats.pop(4)
+        stats.pop(6)
     if activity.avg_heart_rate != 0:
         stats += [
             ("Average heart rate", f"{activity.avg_heart_rate} bpm"),
