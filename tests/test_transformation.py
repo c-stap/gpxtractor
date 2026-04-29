@@ -20,10 +20,10 @@ def _bin_records_helper_func(filepaths, func):
     for filepath in filepaths:
         activity = gpxtractor.extract_data(filepath)
         activity.full_transform()
-        for i in range(50, 350, 50):
+        for i in range(50, 255, 50):  # 255 max as bin_id is in uint8
             df = func(df=activity.records, n_bins=i)
             assert isinstance(df, pd.DataFrame)
-            assert df.size == (5, i)
+            assert df.shape == (i + 1, 6)
 
 
 def test_bin_records_by_distance(all_filepaths):
