@@ -10,6 +10,7 @@ from rich.text import Text
 from rich.table import Table
 
 import gpxtractor
+from gpxtractor._transformation import bin_records_by_distance, bin_records_by_time
 
 
 EMPTY_BRAILLE_CHAR = 0x2800
@@ -95,57 +96,93 @@ def area_chart(data: pd.Series, miny, maxy, height=40, width=200):
     return step, braille_columns(transformed_data)
 
 
+def area_chart_2(data: pd.Series, miny, maxy, height_ndots, width_ndots):
+    if (data == 0).all():
+        return
+
+    data_range = maxy - miny
+    miny_buffer = miny - data_range * 0.05
+    transformed_data = []
+    if maxy != 0:
+        for item in data:
+            item_transformed = 0
+            if item is not None and ~np.isnan(item):
+                item_transformed = int(
+                    (item - miny_buffer) / (maxy - miny_buffer) * height_ndots
+                )
+            transformed_data.append(item_transformed)
+
+    return braille_columns(transformed_data)
+
+
 def trail_blanks(text: str, line_nchar: int) -> str:
     return chr(EMPTY_BRAILLE_CHAR) * (line_nchar - len(text))
 
 
 def draw_area_chart(
     df: pd.DataFrame,
+    x: str,
     y: str,
     title: str,
-    unit: str,
+    y_unit: str,
     colour: str,
-    x: str = "timestamp",
+    height_nlines: int = 10,
+    width_nchar: int = 100,
     ytick_nchar: int = 6,
     ytick_decimals: int = 1,
 ) -> Text:
+    # Char resolution to braille dot resolution
+    width_ndots = width_nchar * 2
+    height_ndots = height_nlines * 4
+    total_width_nchar = width_nchar + ytick_nchar + 1
+
+    if x == 'elapsed_time':
+        df = bin_records_by_time(df, n_bins=width_ndots)
+        x_label = "Elapsed time"
+        x_unit = "(HH:MM:SS)"
+    elif x == 'distance':
+        df = bin_records_by_distance(df, n_bins=width_ndots)
+        x_label = "Distance"
+        x_unit = "km"
     data = df[y]
+
     if not (data == 0).all() and ~data.isna().all():
         maxy = data.max()
         miny = data.min()
-        formatted_miny = f"{miny:>{ytick_nchar}.{ytick_decimals}f}"
-        formatted_maxy = f"{maxy:>{ytick_nchar}.{ytick_decimals}f}"
+        miny_tick = f"{miny:>{ytick_nchar}.{ytick_decimals}f}"
+        maxy_tick = f"{maxy:>{ytick_nchar}.{ytick_decimals}f}"
         if is_integer_dtype(data):
-            formatted_miny = f"{miny:>{ytick_nchar}}"
-            formatted_maxy = f"{maxy:>{ytick_nchar}}"
+            miny_tick = f"{miny:>{ytick_nchar}}"
+            maxy_tick = f"{maxy:>{ytick_nchar}}"
 
         output = Text()
-        title = Text("\n" + title + trail_blanks(title, 100 + ytick_nchar + 1), style="bold")
+        title = Text("\n" + title + trail_blanks(title, total_width_nchar), style="bold")
         output.append(title)
-        output.append('\n' + unit + trail_blanks(unit, 100 + ytick_nchar + 1))
+        output.append("\n" + y_unit + trail_blanks(y_unit, total_width_nchar))
 
-        step, lines = area_chart(data, miny, maxy)
-        for i, line in enumerate(lines):
+        area_lines = area_chart_2(data, miny, maxy, height_ndots, width_ndots)
+        for i, line in enumerate(area_lines):
             text = Text.assemble(f"\n{' ' * ytick_nchar}│", (line, colour))
             if i == 0:
-                text = Text.assemble(f"\n{formatted_maxy}│", (line, colour))
+                text = Text.assemble(f"\n{maxy_tick}│", (line, colour))
             output.append(text)
-        output.append(f"\n{formatted_miny}└" + ("┬" + "─" * 19) * 5)
+        output.append(f"\n{miny_tick}└" + ("┬" + "─" * 19) * 5)
 
         xticks = []
         start_x = df[x].at[0]
-        for xtick in df[x].iloc[step : step * 200 : step * 40]:
-            if isinstance(xtick, pd.Timestamp):
-                time_diff = xtick - start_x
-                xtick = time_diff
-                hours = time_diff.components.hours
-                minutes = time_diff.components.minutes
-                seconds = time_diff.components.seconds
-                xtick = f"{hours:02d}:{minutes:02d}:{seconds:02d}"
-                xticks.append(xtick)
+        for xtick in df[x].iloc[1::int(width_ndots / 5)]:
+            xtick_str = f"{xtick:.2f}"
+            if x == 'elapsed_time':
+                xtick_str = str(timedelta(seconds=xtick))
+            xticks.append(xtick_str)
         xticks_str = chr(EMPTY_BRAILLE_CHAR) * (ytick_nchar + 1)
         xticks_str += "".join(tick + chr(EMPTY_BRAILLE_CHAR) * (20 - len(tick)) for tick in xticks)
         output.append("\n" + xticks_str)
+
+        len_x_label_unit = len(x_label) + 1 + len(x_unit)
+        x_label_line = Text.assemble("\n", chr(EMPTY_BRAILLE_CHAR) * (total_width_nchar - len_x_label_unit), (x_label, "bold"), " ", x_unit)
+        output.append(x_label_line)
+
         return output
 
 
@@ -264,7 +301,7 @@ def summary_table(activity: gpxtractor.Activity) -> Table:
     return table
 
 
-def cli_dashboard(activity: gpxtractor.Activity):
+def cli_dashboard(activity: gpxtractor.Activity, x):
     if not activity.is_transformed:
         activity.full_transform()
 
@@ -277,6 +314,7 @@ def cli_dashboard(activity: gpxtractor.Activity):
     cadence_unit = "spm" if activity.sport == "running" else "rpm"
     elev_char = draw_area_chart(
         activity.records,
+        x,
         "altitude",
         "Elevation",
         "m",
@@ -284,6 +322,7 @@ def cli_dashboard(activity: gpxtractor.Activity):
     )
     speed_chart = draw_area_chart(
         activity.records,
+        x,
         "speed",
         "Speed",
         "km/h",
@@ -291,6 +330,7 @@ def cli_dashboard(activity: gpxtractor.Activity):
     )
     hr_chart = draw_area_chart(
         activity.records,
+        x,
         "heart_rate",
         "Heart Rate",
         "bpm",
@@ -298,6 +338,7 @@ def cli_dashboard(activity: gpxtractor.Activity):
     )
     cadence_chart = draw_area_chart(
         activity.records,
+        x,
         "cadence",
         "Cadence",
         cadence_unit,

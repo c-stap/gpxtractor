@@ -5,7 +5,7 @@ import visidata
 
 import gpxtractor
 from gpxtractor import extract_data
-from gpxtractor._cli_dash import cli_dashboard
+from gpxtractor._tui import cli_dashboard
 
 
 def parse_args():
@@ -80,7 +80,7 @@ def main():
         else:
             print("No laps in file")
     else:
-        cli_dashboard(activity)
+        cli_dashboard(activity, "elapsed_time")
 
 
 if __name__ == "__main__":
