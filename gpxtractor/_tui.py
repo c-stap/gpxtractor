@@ -1,13 +1,16 @@
-from io import StringIO
 import itertools
 from datetime import timedelta
 import numpy as np
 import pandas as pd
 from pandas.api.types import is_integer_dtype
-import click
-from rich.console import Console
 from rich.text import Text
 from rich.table import Table
+from rich.console import Group
+from rich.align import Align
+from textual.app import App, ComposeResult
+from textual.containers import VerticalScroll
+from textual.widgets import Static, Footer
+from textual.binding import Binding
 
 import gpxtractor
 from gpxtractor._transformation import bin_records_by_distance, bin_records_by_time
@@ -130,22 +133,23 @@ def draw_area_chart(
     width_nchar: int = 100,
     ytick_nchar: int = 6,
     ytick_decimals: int = 1,
-) -> Text:
+) -> Align:
     # Char resolution to braille dot resolution
     width_ndots = width_nchar * 2
     height_ndots = height_nlines * 4
     total_width_nchar = width_nchar + ytick_nchar + 1
 
-    if x == 'elapsed_time':
+    if x == "elapsed_time":
         df = bin_records_by_time(df, n_bins=width_ndots)
         x_label = "Elapsed time"
         x_unit = "(HH:MM:SS)"
-    elif x == 'distance':
+    elif x == "distance":
         df = bin_records_by_distance(df, n_bins=width_ndots)
         x_label = "Distance"
         x_unit = "km"
     data = df[y]
 
+    output = Text("")
     if not (data == 0).all() and ~data.isna().all():
         maxy = data.max()
         miny = data.min()
@@ -156,7 +160,9 @@ def draw_area_chart(
             maxy_tick = f"{maxy:>{ytick_nchar}}"
 
         output = Text()
-        title = Text("\n" + title + trail_blanks(title, total_width_nchar), style="bold")
+        title = Text(
+            "\n" + title + trail_blanks(title, total_width_nchar), style="bold"
+        )
         output.append(title)
         output.append("\n" + y_unit + trail_blanks(y_unit, total_width_nchar))
 
@@ -170,20 +176,28 @@ def draw_area_chart(
 
         xticks = []
         start_x = df[x].at[0]
-        for xtick in df[x].iloc[1::int(width_ndots / 5)]:
+        for xtick in df[x].iloc[1 :: int(width_ndots / 5)]:
             xtick_str = f"{xtick:.2f}"
-            if x == 'elapsed_time':
+            if x == "elapsed_time":
                 xtick_str = str(timedelta(seconds=xtick))
             xticks.append(xtick_str)
         xticks_str = chr(EMPTY_BRAILLE_CHAR) * (ytick_nchar + 1)
-        xticks_str += "".join(tick + chr(EMPTY_BRAILLE_CHAR) * (20 - len(tick)) for tick in xticks)
+        xticks_str += "".join(
+            tick + chr(EMPTY_BRAILLE_CHAR) * (20 - len(tick)) for tick in xticks
+        )
         output.append("\n" + xticks_str)
 
         len_x_label_unit = len(x_label) + 1 + len(x_unit)
-        x_label_line = Text.assemble("\n", chr(EMPTY_BRAILLE_CHAR) * (total_width_nchar - len_x_label_unit), (x_label, "bold"), " ", x_unit)
+        x_label_line = Text.assemble(
+            "\n",
+            chr(EMPTY_BRAILLE_CHAR) * (total_width_nchar - len_x_label_unit),
+            (x_label, "bold"),
+            " ",
+            x_unit,
+        )
         output.append(x_label_line)
 
-        return output
+    return Align.center(output)
 
 
 def block_char(x: int) -> str:
@@ -214,7 +228,7 @@ def horizontal_bar(value, total, char_length: int) -> str:
         raise ValueError("char_length must be integer superior to 0")
 
 
-def splits_table(df: pd.DataFrame, sport: str) -> Table:
+def splits_table(df: pd.DataFrame, sport: str) -> Align:
     table_title = "Laps" if "lap" in df.columns else "Kilometre Splits"
     table = Table(title=table_title)
 
@@ -264,7 +278,7 @@ def splits_table(df: pd.DataFrame, sport: str) -> Table:
 
         table.add_row(*row_elements)
 
-    return table
+    return Align.center(table)
 
 
 def summary_table(activity: gpxtractor.Activity) -> Table:
@@ -305,14 +319,10 @@ def cli_dashboard(activity: gpxtractor.Activity, x):
     if not activity.is_transformed:
         activity.full_transform()
 
-    output = StringIO()
-    console = Console(file=output, force_terminal=True)
-    console.print(TITLE, style="blue", justify="center")
-    summary = summary_table(activity)
-    console.print(summary, justify="center")
-
+    title = Align.center(Text(TITLE, style="blue"))
+    summary = Align.center(summary_table(activity))
     cadence_unit = "spm" if activity.sport == "running" else "rpm"
-    elev_char = draw_area_chart(
+    elev_chart = draw_area_chart(
         activity.records,
         x,
         "altitude",
@@ -344,16 +354,91 @@ def cli_dashboard(activity: gpxtractor.Activity, x):
         cadence_unit,
         "green",
     )
-    console.print(elev_char, highlight=False, justify="center")
-    console.print(speed_chart, highlight=False, justify="center")
-    console.print(hr_chart, highlight=False, justify="center")
-    console.print(cadence_chart, highlight=False, justify="center")
-
     km_table = splits_table(activity.km_splits, activity.sport)
-    console.print("\n")
-    console.print(km_table, justify="center")
+    lap_table = ""
     if activity.lap_splits is not None:
         lap_table = splits_table(activity.lap_splits, activity.sport)
-        console.print(lap_table, justify="center")
 
-    click.echo_via_pager(output.getvalue())
+    output = Group(
+        title,
+        summary,
+        elev_chart,
+        speed_chart,
+        hr_chart,
+        cadence_chart,
+        km_table,
+        lap_table,
+    )
+
+    return output
+
+
+def get_km_table(activity):
+    return splits_table(activity.km_splits, activity.sport)
+
+
+def get_lap_table(activity):
+    lap_table = ""
+    if activity.lap_splits is not None:
+        lap_table = splits_table(activity.lap_splits, activity.sport)
+    return lap_table
+
+
+class GPXtractorTUI(App):
+    """A Textual app with pager-like keybindings."""
+
+    BINDINGS = [
+        Binding("j,down,enter", "scroll_down", "Scroll Down", show=True),
+        Binding("k,up,backspace", "scroll_up", "Scroll Up", show=True),
+        Binding("h", "toggle('view1')", "Time on X-axis", show=True),
+        Binding("l", "toggle('view2')", "Distance on X-axis", show=True),
+        Binding("f,space", "page_down", "Page Down", show=True),
+        Binding("b", "page_up", "Page Up", show=True),
+        Binding("g", "top", "Top", show=True),
+        Binding("G", "bottom", "Bottom", show=True),
+        Binding("q,escape", "quit", "Quit", show=True),
+    ]
+
+    def __init__(self, activity: gpxtractor.Activity):
+        super().__init__()
+        self.content1 = cli_dashboard(activity, "elapsed_time")
+        self.content2 = cli_dashboard(activity, "distance")
+
+    def compose(self) -> ComposeResult:
+        with VerticalScroll(id="scroll_window"):
+            self.view1 = Static(id="view1", expand=True)
+            yield self.view1
+            self.view2 = Static(id="view", expand=True)
+            self.view2.styles.display = "none"
+            yield self.view2
+        yield Footer(show_command_palette=False)
+
+    async def on_mount(self):
+        self.view1.update(self.content1)
+        self.view2.update(self.content2)
+
+    def action_toggle(self, view: str) -> None:
+        if view == "view1":
+            self.view1.styles.display = "block"
+            self.view2.styles.display = "none"
+        else:
+            self.view1.styles.display = "none"
+            self.view2.styles.display = "block"
+
+    def action_scroll_down(self) -> None:
+        self.query_one("#scroll_window", VerticalScroll).scroll_down()
+
+    def action_scroll_up(self) -> None:
+        self.query_one("#scroll_window", VerticalScroll).scroll_up()
+
+    def action_page_down(self) -> None:
+        self.query_one("#scroll_window", VerticalScroll).scroll_page_down()
+
+    def action_page_up(self) -> None:
+        self.query_one("#scroll_window", VerticalScroll).scroll_page_up()
+
+    def action_top(self) -> None:
+        self.query_one("#scroll_window", VerticalScroll).scroll_home()
+
+    def action_bottom(self) -> None:
+        self.query_one("#scroll_window", VerticalScroll).scroll_end()
