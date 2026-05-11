@@ -4,8 +4,8 @@ import argparse
 import visidata
 
 import gpxtractor
-from gpxtractor import extract_data
-from gpxtractor._tui import GPXtractorTUI
+from gpxtractor.content import create_pages
+import gpxtractor.tui_framework as tui
 
 
 def parse_args():
@@ -61,7 +61,7 @@ def main():
     if not args.file and not args.version:
         parser.error("the following arguments are required: file")
 
-    activity = extract_data(file_path=args.file)
+    activity = gpxtractor.extract_data(file_path=args.file)
     if args.raw:
         visidata.vd.view_pandas(df=activity.records)
         return
@@ -80,8 +80,8 @@ def main():
         else:
             print("No laps in file")
     else:
-        app = GPXtractorTUI(activity)
-        app.run()
+        pages = create_pages(activity)
+        tui.run(*pages)
 
 
 if __name__ == "__main__":
