@@ -189,17 +189,18 @@ def draw_all_area_charts_for_x(
     y_variables = ["altitude", "speed", "heart_rate", "cadence"]
     y_units = ["m", "km/h", "bpm", cadence_unit]
     for y, colour, unit in zip(y_variables, y_colours, y_units):
-        chart_lines = draw_area_chart(
-            df,
-            x,
-            y,
-            y_label=y.capitalize(),
-            y_unit=unit,
-            colour=colour,
-            height_nlines=height_nlines,
-            width_nchar=width_nchar,
-            ytick_nchar=ytick_nchar,
-            ytick_decimals=ytick_decimals,
-        )
-        output_lines.extend(chart_lines)
+        if not df[y].isna().all() and df[y].all() != 0:
+            chart_lines = draw_area_chart(
+                df,
+                x,
+                y,
+                y_label=y.capitalize(),
+                y_unit=unit,
+                colour=colour,
+                height_nlines=height_nlines,
+                width_nchar=width_nchar,
+                ytick_nchar=ytick_nchar,
+                ytick_decimals=ytick_decimals,
+            )
+            output_lines.extend(chart_lines)
     return output_lines
