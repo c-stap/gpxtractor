@@ -189,7 +189,7 @@ def draw_all_area_charts_for_x(
     y_variables = ["altitude", "speed", "heart_rate", "cadence"]
     y_units = ["m", "km/h", "bpm", cadence_unit]
     for y, colour, unit in zip(y_variables, y_colours, y_units):
-        if not df[y].isna().all() and df[y].all() != 0:
+        if not df[y].isna().all() and df[y].any():
             chart_lines = draw_area_chart(
                 df,
                 x,
