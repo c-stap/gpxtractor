@@ -81,6 +81,7 @@ def main():
             print("No laps in file")
     else:
         pages = create_pages(activity)
+        del activity
         tui.run(*pages)
 
 
