@@ -6,10 +6,37 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Description
-`gpxtractor` is a python package that extracts data 
 
-## Features
+`gpxtractor` is a Python library designed for **data extraction and transformation** of GPS and fitness tracking files, supporting **GPX, TCX, and FIT** formats, whether gzipped or not.
 
+### Extraction Stage
+
+- Extracts raw data from the file **as-is**, preserving the original units for all fields.
+- **Exception**: For FIT files, coordinates are automatically converted to **latitude and longitude**.
+- If present in the file:
+  - **Distance**: metres
+  - **Speed**: metres per second
+
+### Transformation Stage
+
+- **Calculates missing metrics**:
+  - If **distance** or **speed** are not present in the original file, they are computed.
+- **Converts and standardizes units**:
+  - **Distance**: km
+  - **Speed**: km/h
+  - **Pace**: min/km
+  - **Heart rate**: bpm
+- **Cadence handling**:
+  - If the sport is `"running"`: strides per minute (spm)
+  - For all other sports: revolutions per minute (rpm)
+
+## Platform requirements
+
+- Linux, OS/X, Windows (the CLI will only work in WSL)
+- Python 3.13
+- Python dependencies: lxml, fitdecode, numpy, pandas, duckdb
+- Optional Python dependencies: visidata is required for the CLI
+- The TUI uses ANSI escape sequences so make sure to use a terminal emulator that supports them.
 
 ## Installation
 
@@ -17,13 +44,33 @@ To install `gpxtractor`, simply run:
 ```bash
 pip install gpxtractor
 ```
+Or, depending on your python setup, run:
+```bash
+pip3 install gpxtractor
+```
 
 ## Usage
+
 ### CLI
 
-The default usage
+The default usage of the CLI without flags, opens a 3-page TUI with data visuals for a quick analysis of the file.
+- Press `1` for the first page with area charts showing altitude, speed, heart rate and cadence (if available) over elapsed time.
+    - Press `l` to switch from elapsed time to distance on the x-axis.
+    - Press `h` to switch back to elapsed time on the x-axis.
+- Press `2` for the second page with a table of data aggregated by kilometre split.
+- Press `3` for the third page with a table of data aggregated by lap.
+
+For all pages:
+- Press `j` to scroll down
+- Press `k` to scroll up
+- Press `f` for page down
+- Press `b` for page up
+- Press `g` for top of page
+- Press `G` for bottom of page
+- Press `q` to quit
+
 ```bash
-gpxtractor <filename.gpx>  # or .tcx or .fit
+gpxtractor <filename.gpx>  # or .tcx, .fit, .gpx.gz, .tcx.gz, .fit.gz
 ```
 ![TUI Demo](https://raw.githubusercontent.com/c-stap/gpxtractor/main/assets/demo.GIF)
 
@@ -33,10 +80,14 @@ gpxtractor --help
 ```
 
 ### Python API
-Using `gpxtractor` in python is essentially a 2-step process: extraction and transformation.
+
+Using `gpxtractor` in python is essentially a 2-step process:
+- data extraction
+- data transformation.
 
 **Extraction**
-The simplest way to use the `gpxtractor` in python is to extract the data with `gpxtractor.extract_data()` which returns a gpxtractor.Activity instance.
+
+The simplest way to use the `gpxtractor` in python is to extract the data with `gpxtractor.extract_data()` which returns a `gpxtractor.Activity` instance.
 
 ```python
 import gpxtractor
@@ -53,6 +104,7 @@ print(activity.records.head())
 ```
 
 **Transformation**
+
 Once an instance of an Activity as been created with the `extract_data` function, the method
 `transform_records` can be used to calculate distance and speed if missing from the file as well as
 elevation incremental difference, gradient and in the case of running activities, pace.
