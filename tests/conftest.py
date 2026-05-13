@@ -3,9 +3,9 @@ import pytest
 import pyarrow as pa
 
 
-asset_dir = "assets"
-rides_dir = os.path.join(asset_dir, "rides")
-runs_dir = os.path.join(asset_dir, "runs")
+resources_dir = os.path.join("tests", "resources")
+rides_dir = os.path.join(resources_dir, "rides")
+runs_dir = os.path.join(resources_dir, "runs")
 
 
 def _generate_filepaths_from_dir(dir):
@@ -14,7 +14,7 @@ def _generate_filepaths_from_dir(dir):
 
 
 def _generate_all_asset_filepaths():
-    for root, dirs, files in os.walk("assets"):
+    for root, dirs, files in os.walk(resources_dir):
         for file in files:
             yield os.path.join(root, file)
 
