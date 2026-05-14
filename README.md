@@ -58,6 +58,10 @@ pip3 install gpxtractor
 ### CLI
 
 The default usage of the CLI without flags, opens a 3-page TUI with data visuals for a quick analysis of the file.
+```bash
+gpxtractor <filename.gpx>  # or .tcx, .fit, .gpx.gz, .tcx.gz, .fit.gz
+```
+
 - Press `1` for the first page with area charts showing altitude, speed, heart rate and cadence (if available) over elapsed time.
     - Press `l` to switch from elapsed time to distance on the x-axis.
     - Press `h` to switch back to elapsed time on the x-axis.
@@ -73,9 +77,6 @@ For all pages:
 - Press `G` for bottom of page
 - Press `q` to quit
 
-```bash
-gpxtractor <filename.gpx>  # or .tcx, .fit, .gpx.gz, .tcx.gz, .fit.gz
-```
 ![TUI Demo](https://raw.githubusercontent.com/c-stap/gpxtractor/main/assets/demo.GIF)
 
 For the full list of flags and what they do, run
