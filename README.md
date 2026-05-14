@@ -29,12 +29,16 @@
 - **Cadence handling**:
   - If the sport is `"running"`: strides per minute (spm)
   - For all other sports: revolutions per minute (rpm)
+- **Calculates aggregated data grouped by splits**
+  - by kilometre split
+  - by lap
 
 ## Platform requirements
 
-- Linux, OS/X, Windows (the CLI will only work in WSL)
+This is a side project and has not been extensively tested, but the package is expected to work with:
+- Linux, OS/X, Windows (for Windows, the CLI will only work in WSL as it uses visidata which is based on curses)
 - Python 3.13
-- Python dependencies: lxml, fitdecode, numpy, pandas, duckdb
+- Required Python dependencies: lxml, fitdecode, numpy, pandas, duckdb
 - Optional Python dependencies: visidata is required for the CLI
 - The TUI uses ANSI escape sequences so make sure to use a terminal emulator that supports them.
 
@@ -87,17 +91,19 @@ Using `gpxtractor` in python is essentially a 2-step process:
 
 **Extraction**
 
-The simplest way to use the `gpxtractor` in python is to extract the data with `gpxtractor.extract_data()` which returns a `gpxtractor.Activity` instance.
+The first step is to extract the data with `gpxtractor.extract_data()` which returns a `gpxtractor.Activity` instance.
 
 ```python
 import gpxtractor
 
+# Replace "your-gpx-tcx-or-fit_file.gpx" with the file you want to analyse.
 activity = gpxtractor.extract_data("your-gpx-tcx-or-fit_file.gpx")
 
 print(activity.sport) # Output: name of the sport in the file as a string
 ```
+
 The records attribute is a `pandas.DataFrame` holding the records extracted from the file
-with the `gpxtractor.extract_data` function.
+with the `gpxtractor.extract_data` function. 
 
 ```python
 print(activity.records.head())
@@ -105,17 +111,50 @@ print(activity.records.head())
 
 **Transformation**
 
-Once an instance of an Activity as been created with the `extract_data` function, the method
-`transform_records` can be used to calculate distance and speed if missing from the file as well as
-elevation incremental difference, gradient and in the case of running activities, pace.
+Once an instance of an Activity as been created with the `extract_data` function, the method `full_transform` can be used to calculate distance and speed if missing from the file as well as elevation incremental difference, gradient and in the case of running activities, pace.
+```python
+activity.full_transform()
+print(activity.records.head())
+```
 
+The `full_transform` method also calculates the following aggregate data available in the following attributes:
+```python
+print(activity.start_time)
+print(activity.elapsed_time)
+print(activity.distance)
+print(activity.avg_speed)
+print(activity.max_speed)
+print(activity.avg_pace)
+print(activity.elevation_gain)
+print(activity.elevation_loss)
+print(activity.avg_heart_rate)
+print(activity.max_heart_rate)
+print(activity.avg_cadence)
+print(activity.max_cadence)
+```
+
+The `full_transform` method also calculates data aggregated by kilometre split and by lap which are accessible with the `km_splits` and `lap_splits` attributes respectively.
+
+```python
+print(activity.km_splits.head())
+print(activity.lap_splits.head())
+```
+*Note: the `compute_lap_splits` will only compute lap splits if the file contains lap data which is not the case for GPX files, in which case `lap_splits` attribute is `None`.*
+
+**The transformation step in several methods**
+
+If memory is a concern, it is possible to transform the records without calculating the data aggregated by split with the `transform_records` method.
 ```python
 activity.transform_records()
 print(activity.records.head())
 ```
 
-And once the records have been transformed with `transform_records`, it is possible to use the 2
-following methods to calculate aggregated data for kilometre and lap splits.
+You can check that the activity has been transformed with:
+```python
+activity.is_transformed  # returns a bool
+```
+
+And once the records have been transformed with `transform_records`, it is possible to use the 2 following methods to calculate aggregated data for kilometre and lap splits.
 
 ```python
 activity.compute_km_splits()
@@ -124,8 +163,6 @@ print(activity.km_splits)
 activity.compute_lap_splits()
 print(activity.lap_splits)
 ```
-Note: the `compute_lap_splits` will only compute lap splits if the file contains lap data which is not
-the case for GPX files, in which case `lap_splits` attribute is `None`.
 
 ## Roadmap
 
@@ -133,7 +170,10 @@ the case for GPX files, in which case `lap_splits` attribute is `None`.
 - **Additional metrics**: Expand the available metrics to include power, stride length, and more.
 - **Imperial units support**: Add a parameter to the `full_transform()` method to allow users to opt for imperial units.
 
-
 ## Version History
 
-- **v0.2.0**: Introduced a new Terminal User Interface (TUI) in the CLI for a quick analysis with some data visualisations of the contents of the file
+- **v0.2.0**: Introduced a new Terminal User Interface (TUI) in the CLI for a quick analysis with some data visuals of the contents of the file
+
+## Licence
+
+This project is licensed under the **MIT Licence** – see the [LICENCE](LICENSE) file for details.
