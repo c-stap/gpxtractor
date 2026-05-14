@@ -150,7 +150,7 @@ The `full_transform` method also calculates data aggregated by kilometre split a
 print(activity.km_splits.head())
 print(activity.lap_splits.head())
 ```
-*Note: the `compute_lap_splits` will only compute lap splits if the file contains lap data which is not the case for GPX files, in which case `lap_splits` attribute is `None`.*
+*Note: `full_transform` will only compute lap splits if the file contains lap data which is not the case for GPX files, in which case `lap_splits` attribute is `None`.*
 
 **The transformation step in several methods**
 
