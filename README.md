@@ -53,9 +53,19 @@ Or, depending on your python setup, run:
 pip3 install gpxtractor
 ```
 
+To use the CLI, visidata must be installed (This will not work on Windows unless you are using WSL)
+```bash
+pip install gpxtractor[optional]
+```
+Or
+```bash
+pip install gpxtractor
+pip install visidata
+```
+
 ## Usage
 
-### CLI
+### Command-line Interface (CLI)
 
 The default usage of the CLI without flags, opens a 3-page TUI with data visuals for a quick analysis of the file.
 ```bash
@@ -177,4 +187,4 @@ print(activity.lap_splits)
 
 ## Licence
 
-This project is licensed under the **MIT Licence** – see the [LICENCE](LICENSE) file for details.
+This project is licensed under the **MIT Licence** – see the [LICENSE](LICENSE) file for details.

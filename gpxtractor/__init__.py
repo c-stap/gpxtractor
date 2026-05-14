@@ -1,5 +1,5 @@
 """
-GPX, TCX and FIT data extraction for Python
+GPX, TCX and FIT data extraction and transformation for Python
 ======================================
 
 gpxtractor is a python package to extract data from

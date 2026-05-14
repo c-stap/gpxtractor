@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "gpxtractor"
 version = "0.1.0"
-description = "GPX, TCX and FIT data extraction for Python"
+description = "GPX, TCX and FIT data extraction and transformation for Python"
 authors = [
     {name = "Charlie Stapylton", email = "278091496+c-stap@users.noreply.github.com"},
 ]
