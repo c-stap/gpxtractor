@@ -20,7 +20,7 @@ WITH stage_1 AS (
         latitude,
         longitude,
         altitude,
-        altitude - prev_alt AS diff_alt,
+        altitude - prev_alt AS diff_altitude,
         distance,
         distance - prev_dist AS diff_dist,
         speed AS speed_mps,
@@ -36,10 +36,10 @@ SELECT
     latitude,
     longitude,
     ROUND(altitude, 2)::FLOAT AS altitude, -- in meters
-    diff_alt,
+    diff_altitude,
     CASE
         WHEN index > 1
-        THEN ROUND((diff_alt / diff_dist) * 100, 2)::FLOAT
+        THEN ROUND((diff_altitude / diff_dist) * 100, 2)::FLOAT
         ELSE 'NaN'::FLOAT END AS gradient, -- as percentage
     (distance / 1000)::FLOAT AS distance, -- in km
     ROUND(speed_mps * 3.6, 2)::FLOAT AS speed, -- in kph

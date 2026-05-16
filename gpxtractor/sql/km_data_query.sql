@@ -11,12 +11,12 @@ WITH data_with_km_col AS (
         MAX(timestamp) AS end_time,
         MAX(distance) AS max_distance,
         ROUND(SUM(CASE
-            WHEN diff_alt > 0
-            THEN diff_alt
+            WHEN diff_altitude > 0
+            THEN diff_altitude
             ELSE 0 END))::USMALLINT AS elevation_gain,
         ABS(ROUND(SUM(CASE
-            WHEN diff_alt < 0
-            THEN diff_alt
+            WHEN diff_altitude < 0
+            THEN diff_altitude
             ELSE 0 END)))::USMALLINT AS elevation_loss,
         ROUND(AVG(heart_rate))::UTINYINT AS avg_hr,
         MAX(heart_rate)::UTINYINT AS max_hr,

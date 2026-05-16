@@ -12,12 +12,12 @@ WITH overall_stats_stage1 AS (
             CAST(((60 / avg_speed - FLOOR(60 / avg_speed)) * 60) AS INT)
         ) AS avg_pace,
         ROUND(SUM(CASE
-            WHEN diff_alt > 0
-            THEN diff_alt
+            WHEN diff_altitude > 0
+            THEN diff_altitude
             ELSE 0 END))::INTEGER AS elevation_gain,
         ABS(ROUND(SUM(CASE
-            WHEN diff_alt < 0
-            THEN diff_alt
+            WHEN diff_altitude < 0
+            THEN diff_altitude
             ELSE 0 END)))::INTEGER AS elevation_loss,
         ROUND(AVG(heart_rate))::UTINYINT as avg_heart_rate,
         MAX(heart_rate) as max_heart_rate,
