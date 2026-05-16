@@ -18,8 +18,8 @@ WITH data_with_km_col AS (
             WHEN diff_altitude < 0
             THEN diff_altitude
             ELSE 0 END)))::USMALLINT AS elevation_loss,
-        ROUND(AVG(heart_rate))::UTINYINT AS avg_hr,
-        MAX(heart_rate)::UTINYINT AS max_hr,
+        ROUND(AVG(heart_rate))::UTINYINT AS avg_heart_rate,
+        MAX(heart_rate)::UTINYINT AS max_heart_rate,
         ROUND(AVG(cadence))::UTINYINT AS avg_cadence,
         MAX(cadence)::UTINYINT AS max_cadence
     FROM data_with_km_col
@@ -35,8 +35,8 @@ WITH data_with_km_col AS (
         max_distance,
         elevation_gain,
         elevation_loss,
-        avg_hr,
-        max_hr,
+        avg_heart_rate,
+        max_heart_rate,
         avg_cadence,
         max_cadence
     FROM km_data
@@ -58,8 +58,8 @@ WITH data_with_km_col AS (
             ELSE (distance_km / 2) END AS midpoint,
         elevation_gain,
         elevation_loss,
-        avg_hr,
-        max_hr,
+        avg_heart_rate,
+        max_heart_rate,
         avg_cadence,
         max_cadence
     FROM km_data_stage_2
@@ -72,20 +72,20 @@ SELECT
     CASE
         WHEN elapsed_time == 0
         THEN 0
-        ELSE (distance_km / elapsed_time * 3600) END AS avg_speed_kph,
+        ELSE (distance_km / elapsed_time * 3600) END AS avg_speed,
     CASE 
-        WHEN avg_speed_kph == 0
+        WHEN avg_speed == 0
         THEN NULL
         ELSE printf(
             '%02d:%02d',
-            CAST(FLOOR(60 / avg_speed_kph) AS INT),
-            CAST(((60 / avg_speed_kph - FLOOR(60 / avg_speed_kph)) * 60) AS INT)
+            CAST(FLOOR(60 / avg_speed) AS INT),
+            CAST(((60 / avg_speed - FLOOR(60 / avg_speed)) * 60) AS INT)
         ) END AS avg_pace,
     midpoint AS midpoint,
     elevation_gain,
     elevation_loss,
-    avg_hr,
-    max_hr,
+    avg_heart_rate,
+    max_heart_rate,
     avg_cadence,
     max_cadence
 FROM km_data_stage_3

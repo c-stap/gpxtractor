@@ -145,9 +145,9 @@ def get_headers(sport: str):
 
 def colour_bar(bar_str: str, col: str):
     match col:
-        case "avg_speed_kph":
+        case "avg_speed":
             bar_str = style_text(bar_str, colour="blue")
-        case "avg_hr":
+        case "avg_heart_rate":
             bar_str = style_text(bar_str, colour="red")
         case "avg_cadence":
             bar_str = style_text(bar_str, colour="green")
@@ -156,10 +156,10 @@ def colour_bar(bar_str: str, col: str):
 
 def get_rows(df: pd.DataFrame, sport: str):
     columns_to_include = {
-        "avg_speed_kph": ">6.2f",
+        "avg_speed": ">6.2f",
         "elevation_gain": ">4",
         "elevation_loss": ">4",
-        "avg_hr": ">3",
+        "avg_heart_rate": ">3",
         "avg_cadence": ">3",
     }
 
@@ -174,7 +174,7 @@ def get_rows(df: pd.DataFrame, sport: str):
             value = getattr(row, col)
 
             formatted_value = f"{value:{fmt}}"
-            if col == "avg_speed_kph" and sport == "running":
+            if col == "avg_speed" and sport == "running":
                 formatted_value = f"{row.avg_pace:>6}"
 
             element_string = "No Data"
