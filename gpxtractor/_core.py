@@ -118,6 +118,7 @@ class Activity:
     file_type: str
     sport: str
     records: pd.DataFrame
+    units: dict = field(init=False)
     is_transformed: bool = field(default=False, init=False)
     start_time: Optional[pd.Timestamp] = field(default=None, init=False)
     elapsed_time: Optional[int] = field(default=None, init=False)
@@ -133,6 +134,9 @@ class Activity:
     max_cadence: Optional[int] = field(default=None, init=False)
     km_splits: Optional[pd.DataFrame] = field(default=None, init=False)
     lap_splits: Optional[pd.DataFrame] = field(default=None, init=False)
+
+    def __post_init__(self):
+        self.units = ut.get_extracted_units(self.sport)
 
     def __str__(self):
         records_str = str(self.records.head())
@@ -165,8 +169,17 @@ class Activity:
             ")"
         )
 
+    def get_unit(self, stat: str, abbr: bool = True):
+        base_stat = ut.get_base_stat_regex(stat)
+        unit_tuple = self.units.get(base_stat)
+        unit = unit_tuple[1]
+        if abbr:
+            unit = unit_tuple[0]
+        return unit
+
     def _transform_records_to_pyarrow(self):
         if not self.is_transformed:
+            self.units = ut.get_transformed_units(self.sport)
             self.records = pa.Table.from_pandas(self.records)
             self.records = tr.transform_data(self.records, self.sport)
             stats = tr.compute_overall_stats(self.records)
