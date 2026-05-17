@@ -1,17 +1,9 @@
-import itertools
-from datetime import timedelta
-import numpy as np
-import pandas as pd
-from pandas.api.types import is_integer_dtype
-
 import gpxtractor
 from gpxtractor.area_graphs import draw_all_area_charts_for_x
 from gpxtractor.tables import create_splits_table, create_summary_table
 from gpxtractor.ansi_styling import (
     style_text,
     len_ansifree,
-    centre_ansifree,
-    rjust_ansifree,
     ljust_ansifree,
 )
 
@@ -24,6 +16,8 @@ TITLE = """
 """
 INSTRUCTIONS = "PRESS 1 FOR CHARTS, 2 FOR KILOMETRE SPLITS, 3 FOR LAPS"
 INSTRUCTIONS_CHARTS = "PRESS l FOR DISTANCE ON X-AXIS, h FOR TIME ON X-AXIS"
+
+# Following font 'cybermedium' generated with `art` python library
 KM_SPLITS_TITLE = r"""
 _  _ _ _    ____ _  _ ____ ___ ____ ____    ____ ___  _    _ ___ ____
 |_/  | |    |  | |\/| |___  |  |__/ |___    [__  |__] |    |  |  [__
@@ -59,7 +53,7 @@ def create_page_header(activity: gpxtractor.Activity):
 
 def get_km_table(activity):
     output = titlefonts_to_lines(KM_SPLITS_TITLE)
-    output += create_splits_table(activity.km_splits, activity.sport)
+    output += create_splits_table(activity, "km_splits")
     return output
 
 
@@ -67,7 +61,7 @@ def get_lap_table(activity):
     output = titlefonts_to_lines(LAPS_TITLE)
     lap_table = ["No lap data"]
     if activity.lap_splits is not None:
-        lap_table = create_splits_table(activity.lap_splits, activity.sport)
+        lap_table = create_splits_table(activity, "lap_splits")
     output += lap_table
     return output
 

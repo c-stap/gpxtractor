@@ -5,7 +5,7 @@ import os
 
 from gpxtractor.ansi_styling import centre_ansifree
 
-# TODO: make tui reactive to terminal resizing
+# TODO: make tui responsive to terminal resizing
 
 
 def get_terminal_size():

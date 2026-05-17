@@ -1,4 +1,3 @@
-from datetime import timedelta
 import pandas as pd
 
 import gpxtractor
@@ -126,20 +125,23 @@ def create_table(data: list[list], headers: list = None, align: list = None):
     return output_lines
 
 
-def get_headers(sport: str):
+def get_headers(activity: gpxtractor.Activity):
     headers = [
         style_text("Split", style="bold"),
-        style_text("Distance", style="bold") + "\n(km)",
-        style_text("Average Speed", style="bold") + "\n(km/h)",
-        style_text("Elev +", style="bold") + "\n(m)",
-        style_text("Elev -", style="bold") + "\n(m)",
-        style_text("Average HR", style="bold") + "\n(bpm)",
-        style_text("Average Cadence", style="bold") + "\n(rpm)",
+        style_text("Distance", style="bold") + "\n" + activity.get_unit("distance"),
+        style_text("Average Speed", style="bold") + "\n" + activity.get_unit("speed"),
+        style_text("Elev +", style="bold") + "\n" + activity.get_unit("altitude"),
+        style_text("Elev -", style="bold") + "\n" + activity.get_unit("altitude"),
+        style_text("Average HR", style="bold") + "\n" + activity.get_unit("heart_rate"),
+        style_text("Average Cadence", style="bold")
+        + "\n"
+        + activity.get_unit("cadence"),
     ]
 
-    if sport == "running":
-        headers[2] = style_text("Average Pace", style="bold") + "\n(min/km)"
-        headers[-1] = style_text("Average Cadence", style="bold") + "\n(spm)"
+    if activity.sport == "running":
+        headers[2] = (
+            style_text("Average Pace", style="bold") + "\n" + activity.get_unit("pace")
+        )
     return headers
 
 
@@ -189,9 +191,10 @@ def get_rows(df: pd.DataFrame, sport: str):
     return table_rows
 
 
-def create_splits_table(df: pd.DataFrame, sport: str) -> list[str]:
-    headers = get_headers(sport)
-    rows = get_rows(df, sport)
+def create_splits_table(activity: gpxtractor, split_table: str) -> list[str]:
+    df = getattr(activity, split_table)
+    headers = get_headers(activity)
+    rows = get_rows(df, activity.sport)
     align = ["right", "right", "left", "left", "left", "left", "left"]
     table = create_table(rows, headers, align)
     return table

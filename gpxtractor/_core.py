@@ -208,19 +208,6 @@ class Activity:
             self.records = pa.Table.from_pandas(self.records)
             self.records = tr.transform_data(self.records, self.sport)
             stats = tr.compute_overall_stats(self.records)
-            # self.start_time = stats["start_time"].at[0]
-            # self.elapsed_time = int(stats["elapsed_time"].at[0])
-            # self.distance = float(stats["distance"].at[0])
-            # self.avg_speed = float(stats["avg_speed"].at[0])
-            # self.max_speed = float(stats["max_speed"].at[0])
-            # self.avg_pace = stats["avg_pace"].at[0]
-            # self.elevation_gain = int(stats["elevation_gain"].at[0])
-            # self.elevation_loss = int(stats["elevation_loss"].at[0])
-            # self.avg_heart_rate = int(stats["avg_heart_rate"].at[0])
-            # self.max_heart_rate = int(stats["max_heart_rate"].at[0])
-            # self.avg_cadence = int(stats["avg_cadence"].at[0])
-            # self.max_cadence = int(stats["max_cadence"].at[0])
-
             for col in stats.columns:
                 val = stats[col].at[0]
                 if col == "elapsed_time":
