@@ -3,6 +3,18 @@ import gzip
 import re
 
 
+STAT_ATTRS = [
+    "distance",
+    "avg_speed",
+    "max_speed",
+    "avg_pace",
+    "elevation_gain",
+    "elevation_loss",
+    "avg_heart_rate",
+    "max_heart_rate",
+    "avg_cadence",
+    "max_cadence",
+]
 extracted_units = {
     "latitude": ("deg", "degrees"),
     "longitude": ("deg", "degrees"),

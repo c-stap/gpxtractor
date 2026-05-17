@@ -189,7 +189,7 @@ def get_rows(df: pd.DataFrame, sport: str):
     return table_rows
 
 
-def create_splits_table(df: pd.DataFrame, sport: str):
+def create_splits_table(df: pd.DataFrame, sport: str) -> list[str]:
     headers = get_headers(sport)
     rows = get_rows(df, sport)
     align = ["right", "right", "left", "left", "left", "left", "left"]
@@ -197,44 +197,30 @@ def create_splits_table(df: pd.DataFrame, sport: str):
     return table
 
 
-def make_formatted_stat_string(
-    activity: gpxtractor.Activity, stat: str, format: str = None
-):
-    if format:
-        return f"{getattr(activity, stat):{format}} {activity.get_unit(stat)}"
-    return f"{getattr(activity, stat)} {activity.get_unit(stat)}"
-
-
 def create_summary_table(activity: gpxtractor.Activity) -> list[str]:
     stats = [
         ["Sport", activity.sport],
         ["Start time", str(activity.start_time)],
-        ["Distance", make_formatted_stat_string(activity, "distance", ".2f")],
-        ["Elapsed Time", str(timedelta(seconds=activity.elapsed_time))],
-        ["Elevation Gain", make_formatted_stat_string(activity, "elevation_gain")],
-        ["Elevation Loss", make_formatted_stat_string(activity, "elevation_loss")],
-        ["Average pace", make_formatted_stat_string(activity, "avg_pace")],
-        ["Average speed", make_formatted_stat_string(activity, "avg_speed", ".2f")],
-        ["Maximum speed", make_formatted_stat_string(activity, "max_speed", ".2f")],
+        ["Distance", str(activity.distance)],
+        ["Elapsed Time", str(activity.elapsed_time)],
+        ["Elevation Gain", str(activity.elevation_gain)],
+        ["Elevation Loss", str(activity.elevation_loss)],
+        ["Average pace", str(activity.avg_pace)],
+        ["Average speed", str(activity.avg_speed)],
+        ["Maximum speed", str(activity.max_speed)],
     ]
     if activity.sport in ["cycling", "biking"]:
         stats.pop(6)
-    if activity.avg_heart_rate != 0:
+    if activity.avg_heart_rate.value != 0:
         stats += [
-            (
-                "Average heart rate",
-                make_formatted_stat_string(activity, "avg_heart_rate"),
-            ),
-            (
-                "Maximum heart rate",
-                make_formatted_stat_string(activity, "max_heart_rate"),
-            ),
+            ["Average heart rate", str(activity.avg_heart_rate)],
+            ["Maximum heart rate", str(activity.max_heart_rate)],
         ]
 
-    if activity.avg_cadence != 0:
+    if activity.avg_cadence.value != 0:
         stats += [
-            ("Average cadence", make_formatted_stat_string(activity, "avg_cadence")),
-            ("Maximum cadence", make_formatted_stat_string(activity, "max_cadence")),
+            ["Average cadence", str(activity.avg_cadence)],
+            ["Maximum cadence", str(activity.max_cadence)],
         ]
     table = create_table(stats, align=["right", "left"])
     return table

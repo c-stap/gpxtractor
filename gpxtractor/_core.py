@@ -2,6 +2,7 @@ import gzip
 import pathlib
 from typing import Optional
 from dataclasses import dataclass, field
+from datetime import timedelta
 import pyarrow as pa
 import pandas as pd
 
@@ -12,7 +13,29 @@ import gpxtractor._utils as ut
 
 
 @dataclass
+class Stat:
+    value: int | float
+    unit: str
+
+    def __float__(self):
+        return float(self.value)
+
+    def __int__(self):
+        return int(self.value)
+
+    def __str__(self):
+        if isinstance(self.value, float):
+            return f"{self.value:.2f} {self.unit}"
+        else:
+            return f"{self.value} {self.unit}"
+
+    def __repr__(self):
+        return f"{self.value} {self.unit}"
+
+
+@dataclass
 class Activity:
+    # TODO: add units attribute to docstring
     """Stores and manages records and metadata parsed from a gpx, tcx or
     fit file.
 
@@ -149,6 +172,7 @@ class Activity:
         return (
             "Activity(\n"
             f"  is_transformed: {self.is_transformed}\n"
+            f"  units: {self.units}\n"
             f"  file_type: {self.file_type}\n"
             f"  sport: {self.sport}\n"
             f"  start_time: {self.start_time}\n"
@@ -170,6 +194,7 @@ class Activity:
         )
 
     def get_unit(self, stat: str, abbr: bool = True):
+        # TODO: doctstring
         base_stat = ut.get_base_stat_regex(stat)
         unit_tuple = self.units.get(base_stat)
         unit = unit_tuple[1]
@@ -183,18 +208,27 @@ class Activity:
             self.records = pa.Table.from_pandas(self.records)
             self.records = tr.transform_data(self.records, self.sport)
             stats = tr.compute_overall_stats(self.records)
-            self.start_time = stats["start_time"].at[0]
-            self.elapsed_time = int(stats["elapsed_time"].at[0])
-            self.distance = float(stats["distance"].at[0])
-            self.avg_speed = float(stats["avg_speed"].at[0])
-            self.max_speed = float(stats["max_speed"].at[0])
-            self.avg_pace = stats["avg_pace"].at[0]
-            self.elevation_gain = int(stats["elevation_gain"].at[0])
-            self.elevation_loss = int(stats["elevation_loss"].at[0])
-            self.avg_heart_rate = int(stats["avg_heart_rate"].at[0])
-            self.max_heart_rate = int(stats["max_heart_rate"].at[0])
-            self.avg_cadence = int(stats["avg_cadence"].at[0])
-            self.max_cadence = int(stats["max_cadence"].at[0])
+            # self.start_time = stats["start_time"].at[0]
+            # self.elapsed_time = int(stats["elapsed_time"].at[0])
+            # self.distance = float(stats["distance"].at[0])
+            # self.avg_speed = float(stats["avg_speed"].at[0])
+            # self.max_speed = float(stats["max_speed"].at[0])
+            # self.avg_pace = stats["avg_pace"].at[0]
+            # self.elevation_gain = int(stats["elevation_gain"].at[0])
+            # self.elevation_loss = int(stats["elevation_loss"].at[0])
+            # self.avg_heart_rate = int(stats["avg_heart_rate"].at[0])
+            # self.max_heart_rate = int(stats["max_heart_rate"].at[0])
+            # self.avg_cadence = int(stats["avg_cadence"].at[0])
+            # self.max_cadence = int(stats["max_cadence"].at[0])
+
+            for col in stats.columns:
+                val = stats[col].at[0]
+                if col == "elapsed_time":
+                    val = timedelta(seconds=val)
+                elif col in ut.STAT_ATTRS:
+                    unit = self.get_unit(col)
+                    val = Stat(val, unit)
+                setattr(self, col, val)
 
     def transform_records(self):
         """Transforms the data in the records attributes to calculate distance,
