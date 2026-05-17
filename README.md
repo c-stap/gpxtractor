@@ -183,7 +183,11 @@ print(activity.lap_splits)
 
 ## Version History
 
-- **v0.2.0**: Introduced a new Terminal User Interface (TUI) in the CLI for a quick analysis with some data visuals of the contents of the file
+- **v0.2.0**:
+    - Introduced a new Terminal User Interface (TUI) in the CLI for a quick analysis with some data visuals of the contents of the file
+    - Unit clarity:
+        - Added `Activity.get_unit()` method for easy retrieval of the unit for columns in records and splits DataFrames.
+        - Added `Stat` class to provide clarity on the units used for aggregate statistics in Activity attributes.
 
 ## Licence
 

@@ -14,14 +14,21 @@ import gpxtractor._utils as ut
 
 @dataclass
 class Stat:
-    value: int | float
+    # TODO: docstring
+    value: int | float | str
     unit: str
 
     def __float__(self):
-        return float(self.value)
+        if isinstance(self.value, (float, int)):
+            return float(self.value)
+        else:
+            raise ValueError("Stat.value is not a numerical value")
 
     def __int__(self):
-        return int(self.value)
+        if isinstance(self.value, (float, int)):
+            return int(self.value)
+        else:
+            raise ValueError("Stat.value is not a numerical value")
 
     def __str__(self):
         if isinstance(self.value, float):
@@ -75,50 +82,58 @@ class Activity:
         A pandas Timestamp with timezone information indicating the start
         time of the activity.
 
-    elapsed_time : None or int
+    elapsed_time : None or timedelta
         Is None before a transformation method has been called.
-        An integer indicating the total elapsed time of the activity in
-        seconds.
+        An timedelta indicating the total elapsed time of the activity.
 
-    distance : None or float
+    distance : None or Stat
         Is None before a transformation method has been called.
-        A float indicating the total distance covered during the activity
+        A Stat instance holding in its value attribute a float
+        indicating the total distance covered during the activity
         in kilometres.
 
-    avg_speed : None or float
+    avg_speed : None or Stat
         Is None before a transformation method has been called.
-        A float indicating the average speed over the activity in kph.
+        A Stat instance holding in its value attribute a float
+        indicating the average speed over the activity in kph.
 
-    avg_pace : None or str
+    avg_pace : None or Stat
         Is None before a transformation method has been called.
-        A string indicating the average pace over the activity in min per km.
+        A Stat instance holding in its value attribute a string
+        indicating the average pace over the activity in min per km.
 
-    elevation_gain : None or int
+    elevation_gain : None or Stat
         Is None before a transformation method has been called.
-        An integer indicating the total elevation gained during the activity
+        A Stat instance holding in its value attribute an integer
+        indicating the total elevation gained during the activity
         in meters.
 
-    elevation_loss : None or int
+    elevation_loss : None or Stat
         Is None before a transformation method has been called.
-        An integer indicating the total elevation lossed during the activity
+        A Stat instance holding in its value attribute an integer
+        indicating the total elevation lossed during the activity
         in meters.
 
-    avg_heart_rate : None or int
+    avg_heart_rate : None or Stat
         Is None before a transformation method has been called.
-        An integer indicating the average heart rate of the activity in bpm.
+        A Stat instance holding in its value attribute an integer
+        indicating the average heart rate of the activity in bpm.
 
-    max_heart_rate : None or int
+    max_heart_rate : None or Stat
         Is None before a transformation method has been called.
-        An integer indicating the maximum heart rate of the activity in bpm.
+        A Stat instance holding in its value attribute an integer
+        indicating the maximum heart rate of the activity in bpm.
 
-    avg_cadence : None or int
+    avg_cadence : None or Stat
         Is None before a transformation method has been called.
-        An integer indicating the average cadence of the activity in either
+        A Stat instance holding in its value attribute an integer
+        indicating the average cadence of the activity in either
         rpm or, in the case of a running activity spm.
 
-    max_cadence : None or int
+    max_cadence : None or Stat
         Is None before a transformation method has been called.
-        An integer indicating the maximum cadence of the activity in either
+        A Stat instance holding in its value attribute an integer
+        indicating the maximum cadence of the activity in either
         rpm or, in the case of a running activity spm.
 
     records : pandas.DataFrame
