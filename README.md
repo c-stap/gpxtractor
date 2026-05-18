@@ -144,6 +144,51 @@ print(activity.avg_cadence)
 print(activity.max_cadence)
 ```
 
+```console
+>>> for attr in vars(activity):
+...     print(f"{attr}: {type(getattr(activity, attr))}")
+...
+file_type: <class 'str'>
+sport: <class 'str'>
+records: <class 'pandas.core.frame.DataFrame'>
+units: <class 'dict'>
+start_time: <class 'pandas._libs.tslibs.timestamps.Timestamp'>
+elapsed_time: <class 'datetime.timedelta'>
+distance: <class 'gpxtractor._core.Stat'>
+avg_speed: <class 'gpxtractor._core.Stat'>
+max_speed: <class 'gpxtractor._core.Stat'>
+avg_pace: <class 'gpxtractor._core.Stat'>
+elevation_gain: <class 'gpxtractor._core.Stat'>
+elevation_loss: <class 'gpxtractor._core.Stat'>
+avg_heart_rate: <class 'gpxtractor._core.Stat'>
+max_heart_rate: <class 'gpxtractor._core.Stat'>
+avg_cadence: <class 'gpxtractor._core.Stat'>
+max_cadence: <class 'gpxtractor._core.Stat'>
+km_splits: <class 'pandas.core.frame.DataFrame'>
+lap_splits: <class 'pandas.core.frame.DataFrame'>
+is_transformed: <class 'bool'>
+```
+
+**Units**
+
+
+```console
+>>> activity.max_speed
+20.8799991607666 km/h
+>>> activity.max_speed.value
+20.8799991607666
+>>> activity.max_speed.unit
+'km/h'
+>>> float(activity.max_speed)
+20.8799991607666
+>>> str(activity.max_speed)
+'20.88 km/h'
+>>> print(activity.max_speed)
+20.88 km/h
+>>> repr(activity.max_speed)
+'20.8799991607666 km/h'
+```
+
 The `full_transform` method also calculates data aggregated by kilometre split and by lap which are accessible with the `km_splits` and `lap_splits` attributes respectively.
 
 ```python
