@@ -34,4 +34,4 @@ def test_bin_records_by_distance(all_filepaths):
 
 
 def test_bin_records_by_time(all_filepaths):
-    _bin_records_helper_func(all_filepaths, tr.bin_records_by_time, 2)
+    _bin_records_helper_func(all_filepaths, tr.bin_records_by_time, 0)

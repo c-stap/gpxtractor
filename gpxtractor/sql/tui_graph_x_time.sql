@@ -47,18 +47,38 @@ WITH bounds AS (
         avg_cadence,
     FROM binned_data_2
     ORDER BY bin_id
+), binned_data_4 AS (
+    SELECT
+        bin_id,
+        (SUM(time_diff) OVER (ORDER BY bin_id))::UINTEGER AS elapsed_time,
+        avg_altitude AS altitude,
+        CASE
+            WHEN time_diff == 0
+            THEN 0
+            ELSE (distance_km / time_diff * 3600) END AS speed,
+        avg_hr AS heart_rate,
+        avg_cadence AS cadence,
+    FROM binned_data_3
+    ORDER BY bin_id
+), all_bins AS (
+    SELECT
+        * AS bin_id
+    FROM
+        generate_series(
+            (SELECT MIN(bin_id) FROM binned_data_4),
+            ((SELECT MIN(bin_id) FROM binned_data_4) + {n_bins})  -- stop is inclusive
+        )
 )
-
 SELECT
-    bin_id,
-    (SUM(time_diff) OVER (ORDER BY bin_id))::UINTEGER AS elapsed_time,
-    avg_altitude AS altitude,
-    CASE
-        WHEN time_diff == 0
-        THEN 0
-        ELSE (distance_km / time_diff * 3600) END AS speed,
-    avg_hr AS heart_rate,
-    avg_cadence AS cadence,
-FROM binned_data_3
-ORDER BY bin_id;
-
+    a.bin_id,
+    COALESCE(b.elapsed_time, 0) AS elapsed_time,
+    COALESCE(b.altitude, 0.0) AS altitude,
+    COALESCE(b.speed, 0.0) AS speed,
+    COALESCE(b.heart_rate, 0) AS heart_rate,
+    COALESCE(b.cadence, 0) AS cadence
+FROM
+    all_bins AS a
+LEFT JOIN
+    binned_data_4 AS b ON a.bin_id = b.bin_id
+ORDER BY
+    a.bin_id;
