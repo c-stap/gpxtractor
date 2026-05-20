@@ -100,7 +100,7 @@ def draw_area_chart(
     # Char resolution to braille dot resolution
     width_ndots = width_nchar * 2
     height_ndots = height_nlines * 4
-    total_width_nchar = width_nchar + ytick_nchar + 1
+    total_width_nchar = width_nchar + ytick_nchar + 2
 
     if x == "elapsed_time":
         x_label = "Elapsed time"
@@ -135,7 +135,7 @@ def draw_area_chart(
             text += trail_blanks(text, total_width_nchar)
             output_lines.append(text)
         x_axis_str = (
-            f"{miny_tick}└" + ("┬" + "─" * 19) * 5 + "─"
+            f"{miny_tick}└" + ("┬" + "─" * 19) * 5 + "┬"
         )  # TODO: last char is a bodged fix
         output_lines.append(x_axis_str)
 
