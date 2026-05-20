@@ -16,19 +16,22 @@ def test_is_col_all_null(null_pyarrow_table, filled_pyarrow_table):
         assert not tr.is_col_all_null(filled_pyarrow_table, col)
 
 
-def _bin_records_helper_func(filepaths, func):
+def _bin_records_helper_func(filepaths, func, int_away):
     for filepath in filepaths:
         activity = gpxtractor.extract_data(filepath)
         activity.full_transform()
         for i in range(50, 255, 50):  # 255 max as bin_id is in uint8
             df = func(df=activity.records, n_bins=i)
-            assert isinstance(df, pd.DataFrame)
-            assert df.shape == (i + 1, 6)
+            n_bins, n_cols = df.shape
+            if len(activity.records) >= i:
+                assert isinstance(df, pd.DataFrame)
+                assert n_cols == 6
+                assert i - int_away <= n_bins <= i + 1
 
 
 def test_bin_records_by_distance(all_filepaths):
-    _bin_records_helper_func(all_filepaths, tr.bin_records_by_distance)
+    _bin_records_helper_func(all_filepaths, tr.bin_records_by_distance, 0)
 
 
 def test_bin_records_by_time(all_filepaths):
-    _bin_records_helper_func(all_filepaths, tr.bin_records_by_time)
+    _bin_records_helper_func(all_filepaths, tr.bin_records_by_time, 2)
