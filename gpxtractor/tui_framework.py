@@ -5,7 +5,8 @@ import os
 
 from gpxtractor.ansi_styling import centre_ansifree
 
-# TODO: make tui responsive to terminal resizing
+# TODO: make tui responsive to terminal resizing without having to press key
+# TODO: impose minimum width or enable horizontal scrolling
 
 
 def get_terminal_size():
@@ -44,10 +45,6 @@ def get_lines_to_display(content, top_line, height):
             yield content[line_idx]
         else:
             yield ""
-
-
-def center_area_chart_line(line: str, width: int, line_width=107) -> str:
-    return " " * ((width - line_width) // 2) + line
 
 
 def draw(width, height, content, top_line):
@@ -116,6 +113,14 @@ def run(content_1, content_2, content_3, content_4):
     top_line = draw(width, height, content_1, top_line)
 
     while True:
+        # --- Check for terminal resize ---
+        new_width, new_height = get_terminal_size()
+        if (new_width, new_height) != (width, height):
+            width, height = new_width, new_height
+            content = [content_1, content_2, content_3, content_4][current_content]
+            top_line = draw(width, height, content, top_line)
+
+        # --- Handle key press ---
         top_line, current_content, should_continue = handle_key(
             width,
             height,
@@ -125,7 +130,8 @@ def run(content_1, content_2, content_3, content_4):
         )
         if not should_continue:
             break
-        # Select content AFTER updating current_content
+
+        # --- Redraw after key handling ---
         content = [content_1, content_2, content_3, content_4][current_content]
         top_line = draw(width, height, content, top_line)
 
