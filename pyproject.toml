@@ -9,6 +9,10 @@ description = "GPX, TCX and FIT data extraction and transformation for Python"
 authors = [
     {name = "Charlie Stapylton", email = "278091496+c-stap@users.noreply.github.com"},
 ]
+maintainers = [
+    {name = "Charlie Stapylton", email = "278091496+c-stap@users.noreply.github.com"},
+]
+
 dependencies = [
     "lxml>=6.0.2",
     "numpy>=2.3.1",
