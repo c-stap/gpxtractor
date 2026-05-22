@@ -32,3 +32,9 @@ include = ["gpxtractor*", "gpxtractor.sql*"]
 
 [tool.setuptools.package-data]
 gpxtractor = ["sql/*.sql"]
+
+[project.urls]
+Homepage = "https://github.com/c-stap/gpxtractor"
+Documentation = "https://github.com/c-stap/gpxtractor#readme"
+Repository = "https://github.com/c-stap/gpxtractor.git"
+Issues = "https://github.com/c-stap/gpxtractor/issues"
