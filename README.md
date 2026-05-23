@@ -147,7 +147,7 @@ You can check that the activity has been transformed with:
 activity.is_transformed  # returns a bool
 ```
 
-The `full_transform` method also calculates the following aggregate data available in the following attributes:
+The `full_transform` method calculates the following aggregate data available in the following attributes:
 ```python
 print(activity.start_time)
 print(activity.elapsed_time)
