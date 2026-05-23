@@ -201,64 +201,34 @@ is_transformed: <class 'bool'>
 
 **Units**
 
-Some units will change with the transformation step. It is possible to consult the units for both the columns of the `records`, `km_splits` and `lap_splits` attributes and the units of the aggregated statistics stored as `gpxtractor.Activity` attributes of type `<class 'gpxtractor._core.Stat'>`
-The `gpxtractor._core.Stat` class is designed to hold both numerical value and the associated unit. It has two attributes: `value` and `unit`. The snippets below show how you can access the value and unit of the aggregate statistics of a `gpxtractor.Activity instance`.
-```python
-activity.max_speed
-```
+Some units will change with the transformation step. It is possible to consult the units for both the columns of the `records`, `km_splits` and `lap_splits` attributes and the units of the aggregated statistics stored as `gpxtractor.Activity` attributes of type `<class 'gpxtractor._core.Stat'>`. The `gpxtractor._core.Stat` class is designed to hold both numerical value and the associated unit. It has two attributes: `value` and `unit`. The snippets below show how you can access the value and unit of the aggregate statistics of a `gpxtractor.Activity instance`.
+
 ```console
+>>> activity.max_speed
 20.8799991607666 km/h
-```
-```python
-activity.max_speed.value
-```
-```console
+>>> activity.max_speed.value
 20.8799991607666
-```
-```python
-activity.max_speed.unit
-```
-```console
+>>> activity.max_speed.unit
 'km/h'
-```
-```python
-float(activity.max_speed)
-```
-```console
+>>> float(activity.max_speed)
 20.8799991607666
-```
-```python
-str(activity.max_speed)  # floats are rounded to 2 decimals
-```
-```console
+>>> str(activity.max_speed)  # floats are rounded to 2 decimals
 '20.88 km/h'
-```
-```python
-print(activity.max_speed)
-```
-```console
-20.88 km/h
-```
-```python
-repr(activity.max_speed)
-```
-```console
+>>> repr(activity.max_speed)
 '20.8799991607666 km/h'
+>>> print(activity.max_speed)
+20.88 km/h
 ```
 
 To get the units for the columns of the `pandas.DataFrame` instances stored in the `records`, `km_splits` and `lap_splits` attributes of a gpxtractor.Activity instance, you can use the `get_unit` method as follows:
-```python
-activity.get_unit("avg_speed")  # replace "avg_speed" with any column name
-```
 ```console
+>>> activity.get_unit("avg_speed")  # replace "avg_speed" with any column name
 'km/h'
 ```
 
 Or to get the unit in full:
-```python
-activity.get_unit("avg_speed", abbr=False)
-```
 ```console
+>>> activity.get_unit("avg_speed", abbr=False)
 'kilometres per hour'
 ```
 
