@@ -11,32 +11,46 @@
 
 ### Extraction Stage
 
+*Important: As the goal of `gpxtractor` is to extract and transform the data from all 3 file types (GPX, TCX and FIT) in a uniform manner, the extraction step is selective. It only extracts the following: timestamp, coordinates (latitude and longitude), and if present in the file, altitude, distance, speed, heart rate and cadence.*
+
 - Extracts raw data from the file **as-is**, preserving the original units for all fields.
-- **Exception**: For FIT files, coordinates are automatically converted to **latitude and longitude**.
-- If present in the file:
-  - **Distance**: metres
-  - **Speed**: metres per second
+- **Exception**: For FIT files, coordinates, which are stored differently, are automatically converted to degrees.
+
+*Note: if the sport is running, the cadence is in strides per minute (steps per minute divided by 2) which for clarity is abbreviated to `strpm` in this package.*
 
 ### Transformation Stage
 
 - **Calculates missing metrics**:
   - If **distance** or **speed** are not present in the original file, they are computed.
-- **Converts and standardizes units**:
+  - If the file contains altitude data, **gradient** and **diff_altitude** (the incremental difference in altitude between two rows) are computed.
+- **Converts units**:
   - **Distance**: km
   - **Speed**: km/h
   - **Pace**: min/km
-  - **Heart rate**: bpm
 - **Cadence handling**:
-  - If the sport is `"running"`: strides per minute (spm)
+  - If the sport is `"running"`: steps per minute (spm)
   - For all other sports: revolutions per minute (rpm)
 - **Calculates aggregated data grouped by splits**
   - by kilometre split
   - by lap
+- **Calculates aggregate statistics for the whole file**
+  - `start_time`
+  - `elapsed_time`
+  - `distance`
+  - `avg_speed`
+  - `max_speed`
+  - `avg_pace`
+  - `elevation_gain`
+  - `elevation_loss`
+  - `avg_heart_rate`
+  - `max_heart_rate`
+  - `avg_cadence`
+  - `max_cadence`
 
 ## Platform requirements
 
 This is a side project and has not been extensively tested, but the package is expected to work with:
-- Linux, OS/X, Windows (for Windows, the CLI will only work in WSL as it uses visidata which is based on curses)
+- Linux, MacOS, Windows (for Windows, the CLI will only work in WSL)
 - Python 3.13
 - Required Python dependencies: lxml, fitdecode, numpy, pandas, duckdb
 - Optional Python dependencies: visidata is required for the CLI
@@ -128,6 +142,11 @@ activity.full_transform()
 print(activity.records.head())
 ```
 
+You can check that the activity has been transformed with:
+```python
+activity.is_transformed  # returns a bool
+```
+
 The `full_transform` method also calculates the following aggregate data available in the following attributes:
 ```python
 print(activity.start_time)
@@ -144,10 +163,21 @@ print(activity.avg_cadence)
 print(activity.max_cadence)
 ```
 
+The `full_transform` method also calculates data aggregated by kilometre split and by lap which are accessible with the `km_splits` and `lap_splits` attributes respectively.
+
+```python
+print(activity.km_splits.head())
+print(activity.lap_splits.head())
+```
+*Note: `full_transform` will only compute lap splits if the file contains lap data which is not the case for GPX files, in which case `lap_splits` attribute is `None`.*
+
+
+Below are all the attributes of a gpxtractor.Activity instance and their types:
+```python
+for attr in vars(activity):
+    print(f"{attr}: {type(getattr(activity, attr))}")
+```
 ```console
->>> for attr in vars(activity):
-...     print(f"{attr}: {type(getattr(activity, attr))}")
-...
 file_type: <class 'str'>
 sport: <class 'str'>
 records: <class 'pandas.core.frame.DataFrame'>
@@ -171,41 +201,76 @@ is_transformed: <class 'bool'>
 
 **Units**
 
-
+Some units will change with the transformation step. It is possible to consult the units for both the columns of the `records`, `km_splits` and `lap_splits` attributes and the units of the aggregated statistics stored as `gpxtractor.Activity` attributes of type `<class 'gpxtractor._core.Stat'>`
+The `gpxtractor._core.Stat` class is designed to hold both numerical value and the associated unit. It has two attributes: `value` and `unit`. The snippets below show how you can access the value and unit of the aggregate statistics of a `gpxtractor.Activity instance`.
+```python
+activity.max_speed
+```
 ```console
->>> activity.max_speed
 20.8799991607666 km/h
->>> activity.max_speed.value
+```
+```python
+activity.max_speed.value
+```
+```console
 20.8799991607666
->>> activity.max_speed.unit
+```
+```python
+activity.max_speed.unit
+```
+```console
 'km/h'
->>> float(activity.max_speed)
+```
+```python
+float(activity.max_speed)
+```
+```console
 20.8799991607666
->>> str(activity.max_speed)
+```
+```python
+str(activity.max_speed)  # floats are rounded to 2 decimals
+```
+```console
 '20.88 km/h'
->>> print(activity.max_speed)
+```
+```python
+print(activity.max_speed)
+```
+```console
 20.88 km/h
->>> repr(activity.max_speed)
+```
+```python
+repr(activity.max_speed)
+```
+```console
 '20.8799991607666 km/h'
 ```
 
-The `full_transform` method also calculates data aggregated by kilometre split and by lap which are accessible with the `km_splits` and `lap_splits` attributes respectively.
-
+To get the units for the columns of the `pandas.DataFrame` instances stored in the `records`, `km_splits` and `lap_splits` attributes of a gpxtractor.Activity instance, you can use the `get_unit` method as follows:
 ```python
-print(activity.km_splits.head())
-print(activity.lap_splits.head())
+activity.get_unit("avg_speed")  # replace "avg_speed" with any column name
 ```
-*Note: `full_transform` will only compute lap splits if the file contains lap data which is not the case for GPX files, in which case `lap_splits` attribute is `None`.*
+```console
+'km/h'
+```
+
+Or to get the unit in full:
+```python
+activity.get_unit("avg_speed", abbr=False)
+```
+```console
+'kilometres per hour'
+```
 
 **The transformation step in several methods**
 
-If memory is a concern, it is possible to transform the records without calculating the data aggregated by split with the `transform_records` method.
+If, for whatever reason, you need to transform the records without computing the splits DataFrames, it is possible to transform the records without calculating the data aggregated by split with the `transform_records` method.
 ```python
 activity.transform_records()
 print(activity.records.head())
 ```
 
-You can check that the activity has been transformed with:
+Reminder: you can check that the activity has been transformed.
 ```python
 activity.is_transformed  # returns a bool
 ```
@@ -228,11 +293,12 @@ print(activity.lap_splits)
 
 ## Version History
 
-- **v0.2.0**:
+- **v0.2.0** (2026-05-23):
     - Introduced a new Terminal User Interface (TUI) in the CLI for a quick analysis with some data visuals of the contents of the file
     - Unit clarity:
         - Added `Activity.get_unit()` method for easy retrieval of the unit for columns in records and splits DataFrames.
         - Added `Stat` class to provide clarity on the units used for aggregate statistics in Activity attributes.
+- **v0.1.0** (2026-04-21)
 
 ## Licence
 
