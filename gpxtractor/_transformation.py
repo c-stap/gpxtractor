@@ -1,5 +1,5 @@
 import inspect
-from importlib_resources import files
+from importlib.resources import files
 import pandas as pd
 import pyarrow as pa
 import duckdb
