@@ -12,11 +12,16 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="""
             Data extraction and transformation for gpx, tcx and fit.
-            By default, presents an overview of the data with aggregate stats
-            and data visuals.
+            By default, opens a Terminal User Interface (TUI) of the data
+            with aggregate stats and data visuals.
             """
     )
-    parser.add_argument("file", type=str, nargs="?", help="")
+    parser.add_argument(
+        "file",
+        type=str,
+        nargs="?",
+        help="Input file (required for default usage, except with --version or --help).",
+    )
     parser.add_argument(
         "--raw",
         action="store_true",
@@ -30,7 +35,7 @@ def parse_args():
     parser.add_argument(
         "--sport",
         action="store_true",
-        help="Print the sport or activity type of the file.",
+        help="Display the sport or activity type of the file.",
     )
     parser.add_argument(
         "--kms",
