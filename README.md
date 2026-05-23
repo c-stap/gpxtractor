@@ -69,10 +69,6 @@ pip3 install gpxtractor
 
 To use the CLI, visidata must be installed (This will not work on Windows unless you are using WSL)
 ```bash
-pip install gpxtractor[optional]
-```
-Or
-```bash
 pip install gpxtractor
 pip install visidata
 ```
@@ -263,6 +259,8 @@ print(activity.lap_splits)
 
 ## Version History
 
+- **v0.2.1** (2026-05-23):
+    - Fixed: replaced importlib_resources with standard module importlib.resources as it was not specified in required dependencies.
 - **v0.2.0** (2026-05-23):
     - Introduced a new Terminal User Interface (TUI) in the CLI for a quick analysis with some data visuals of the contents of the file
     - Unit clarity:
