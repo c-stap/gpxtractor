@@ -86,11 +86,11 @@ def trail_blanks(text: str, line_nchar: int) -> str:
 
 # TODO: make each string in ouput_lines have the same length (ansifree)
 def draw_area_chart(
+    activity: gpxtractor.Activity,
     df: pd.DataFrame,
     x: str,
     y: str,
     y_label: str,
-    y_unit: str,
     colour: str,
     height_nlines: int = 10,
     width_nchar: int = 100,
@@ -102,12 +102,13 @@ def draw_area_chart(
     height_ndots = height_nlines * 4
     total_width_nchar = width_nchar + ytick_nchar + 2
 
+    y_unit = activity.get_unit(y)
     if x == "elapsed_time":
         x_label = "Elapsed time"
         x_unit = "(HH:MM:SS)"
     elif x == "distance":
         x_label = "Distance"
-        x_unit = "km"
+        x_unit = activity.get_unit("distance")
     data = df[y]
 
     if not (data == 0).all() and ~data.isna().all():
@@ -136,7 +137,7 @@ def draw_area_chart(
             output_lines.append(text)
         x_axis_str = (
             f"{miny_tick}└" + ("┬" + "─" * 19) * 5 + "┬"
-        )  # TODO: last char is a bodged fix
+        )
         output_lines.append(x_axis_str)
 
         xticks = []
@@ -180,22 +181,17 @@ def draw_all_area_charts_for_x(
     elif x == "distance":
         df = bin_records_by_distance(activity.records, n_bins=width_ndots)
 
-    cadence_unit = "rpm"
-    if activity.sport == "running":
-        cadence_unit = "spm"
-
     output_lines = []
     y_colours = [None, "blue", "red", "green"]
     y_variables = ["altitude", "speed", "heart_rate", "cadence"]
-    y_units = ["m", "km/h", "bpm", cadence_unit]
-    for y, colour, unit in zip(y_variables, y_colours, y_units):
+    for y, colour in zip(y_variables, y_colours):
         if not df[y].isna().all() and df[y].any():
             chart_lines = draw_area_chart(
+                activity,
                 df,
                 x,
                 y,
                 y_label=y.capitalize(),
-                y_unit=unit,
                 colour=colour,
                 height_nlines=height_nlines,
                 width_nchar=width_nchar,

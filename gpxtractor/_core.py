@@ -68,7 +68,8 @@ class Activity:
     is_transformed : bool
         initially False, becomes True once either the method
         `transform_records` or `full_transform` is used.
-
+    units : None or dict
+        A dictionary containing the units used for each metric.
     file_type : str
         Can be any of the following: 'GPX', 'TCX' or 'FIT'.
         Corresponds to the type of the file for which the instance of the
@@ -141,14 +142,14 @@ class Activity:
         Records can be transformed with the methods `transform_records` or
         `full_transform`.
 
-    km_splits : None or pandas.DataFrame
+    splits : None or pandas.DataFrame
         Initially None. DataFrame holding the transformed and aggregated data
-        grouped by kilometre splits once the `compute_km_splits` or
+        grouped by distance unit splits (km or mi) once the `compute_splits` or
         `full_transform` method has been used.
 
-    lap_splits : None or pandas.DataFrame
+    laps : None or pandas.DataFrame
         Initially None. DataFrame holding the transformed and aggregated data
-        grouped by lap splits once the `compute_lap_splits` or
+        grouped by lap splits once the `compute_laps` or
         `full_transform` method has been used. Can only hold data if the file
         has lap data which is not the case for gpx files.
     """
@@ -170,20 +171,16 @@ class Activity:
     max_heart_rate: Optional[int] = field(default=None, init=False)
     avg_cadence: Optional[int] = field(default=None, init=False)
     max_cadence: Optional[int] = field(default=None, init=False)
-    km_splits: Optional[pd.DataFrame] = field(default=None, init=False)
-    lap_splits: Optional[pd.DataFrame] = field(default=None, init=False)
+    splits: Optional[pd.DataFrame] = field(default=None, init=False)
+    laps: Optional[pd.DataFrame] = field(default=None, init=False)
 
     def __post_init__(self):
         self.units = ut.get_extracted_units(self.sport)
 
     def __str__(self):
         records_str = str(self.records.head())
-        km_splits_str = (
-            str(self.km_splits.head()) if self.km_splits is not None else None
-        )
-        lap_splits_str = (
-            str(self.lap_splits.head()) if self.lap_splits is not None else None
-        )
+        splits_str = str(self.splits.head()) if self.splits is not None else None
+        laps_str = str(self.laps.head()) if self.laps is not None else None
         return (
             "Activity(\n"
             f"  is_transformed: {self.is_transformed}\n"
@@ -203,8 +200,8 @@ class Activity:
             f"  avg_cadence: {self.avg_cadence}\n"
             f"  max_cadence: {self.max_cadence}\n"
             f"  records:\n{records_str}\n"
-            f"  km_splits:\n{km_splits_str}\n"
-            f"  lap_splits:\n{lap_splits_str}\n"
+            f"  splits:\n{splits_str}\n"
+            f"  laps:\n{laps_str}\n"
             ")"
         )
 
@@ -217,11 +214,11 @@ class Activity:
             unit = unit_tuple[0]
         return unit
 
-    def _transform_records_to_pyarrow(self):
+    def _transform_records_to_pyarrow(self, units: str):
         if not self.is_transformed:
-            self.units = ut.get_transformed_units(self.sport)
+            self.units = ut.get_transformed_units(self.sport, unit_system=units)
             self.records = pa.Table.from_pandas(self.records)
-            self.records = tr.transform_data(self.records, self.sport)
+            self.records = tr.transform_data(self.records, self.sport, units)
             stats = tr.compute_overall_stats(self.records)
             for col in stats.columns:
                 val = stats[col].at[0]
@@ -232,42 +229,55 @@ class Activity:
                     val = Stat(val, unit)
                 setattr(self, col, val)
 
-    def transform_records(self):
+    def transform_records(self, units: str = "metric"):
         """Transforms the data in the records attributes to calculate distance,
         speed if absent and elevation difference, gradient and, in the case of
         running activities, pace.
+
+        Parameters
+        ----------
+        units : str, optional
+            The unit system used. Can be either "metric" or "imperial".
+            Default is "metric".
         """
         if not self.is_transformed:
-            self._transform_records_to_pyarrow()
+            self._transform_records_to_pyarrow(units)
             self.records = self.records.to_pandas(types_mapper=pd.ArrowDtype)
             self.is_transformed = True
 
-    def compute_lap_splits(self):
-        """If there is lap data in the records, updates the lap_splits to a
+    def compute_laps(self):
+        """If there is lap data in the records, updates the laps to a
         DataFrame holding the transformed and aggregated data grouped by lap
         splits. Note: there is no lap data in gpx files.
         """
         if self.file_type != "GPX" and self.is_transformed:
             self.records = pa.Table.from_pandas(self.records)
-            self.lap_splits = tr.compute_lap_data(self.records)
+            self.laps = tr.compute_lap_data(self.records)
             self.records = self.records.to_pandas(types_mapper=pd.ArrowDtype)
 
-    def compute_km_splits(self):
-        """Updates km_splits attribute to a DataFrame holding the transformed
+    def compute_splits(self):
+        """Updates splits attribute to a DataFrame holding the transformed
         and aggregated data grouped by kilometre splits.
         """
         if self.is_transformed:
             self.records = pa.Table.from_pandas(self.records)
-            self.km_splits = tr.compute_km_data(self.records)
+            self.splits = tr.compute_split_data(self.records, self.get_unit("distance"))
             self.records = self.records.to_pandas(types_mapper=pd.ArrowDtype)
 
-    def full_transform(self):
-        """Transforms data in records, computes km and lap splits"""
+    def full_transform(self, units: str = "metric"):
+        """Transforms data in records, computes km and lap splits
+
+        Parameters
+        ----------
+        units : str, optional
+            The unit system used. Can be either "metric" or "imperial".
+            Default is "metric".
+        """
         if not self.is_transformed:
-            self._transform_records_to_pyarrow()
-            self.km_splits = tr.compute_km_data(self.records)
+            self._transform_records_to_pyarrow(units)
+            self.splits = tr.compute_split_data(self.records, self.get_unit("distance"))
             if self.file_type != "GPX":
-                self.lap_splits = tr.compute_lap_data(self.records)
+                self.laps = tr.compute_lap_data(self.records)
             self.records = self.records.to_pandas(types_mapper=pd.ArrowDtype)
             self.is_transformed = True
 

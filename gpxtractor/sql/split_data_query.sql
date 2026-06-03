@@ -1,12 +1,12 @@
-WITH data_with_km_col AS (
+WITH data_with_unit_col AS (
     SELECT 
         *,
-        TRUNC(distance) + 1 AS km
+        TRUNC(distance) + 1 AS unit
     FROM {table_name}
     ORDER BY timestamp
-), km_data AS (
+), unit_data AS (
     SELECT
-        km::SMALLINT AS km,
+        unit::SMALLINT AS unit,
         MIN(timestamp) AS start_time,
         MAX(timestamp) AS end_time,
         MAX(distance) AS max_distance,
@@ -22,16 +22,16 @@ WITH data_with_km_col AS (
         MAX(heart_rate)::UTINYINT AS max_heart_rate,
         ROUND(AVG(cadence))::UTINYINT AS avg_cadence,
         MAX(cadence)::UTINYINT AS max_cadence
-    FROM data_with_km_col
-    GROUP BY km
-    ORDER BY km
-), km_data_stage_2 AS (
+    FROM data_with_unit_col
+    GROUP BY unit
+    ORDER BY unit
+), unit_data_stage_2 AS (
     SELECT
-        km,
+        unit,
         start_time,
         end_time,
-        LAG(end_time, 1) OVER (ORDER BY km) AS km_start_time,
-        LAG(max_distance, 1) OVER (ORDER BY km) AS km_start_distance,
+        LAG(end_time, 1) OVER (ORDER BY unit) AS unit_start_time,
+        LAG(max_distance, 1) OVER (ORDER BY unit) AS unit_start_distance,
         max_distance,
         elevation_gain,
         elevation_loss,
@@ -39,40 +39,40 @@ WITH data_with_km_col AS (
         max_heart_rate,
         avg_cadence,
         max_cadence
-    FROM km_data
-    ORDER BY km
-), km_data_stage_3 AS (
+    FROM unit_data
+    ORDER BY unit
+), unit_data_stage_3 AS (
     SELECT
-        km,
+        unit,
         CASE
-            WHEN km > 1
-            THEN date_diff('second', km_start_time , end_time)
+            WHEN unit > 1
+            THEN date_diff('second', unit_start_time , end_time)
             ELSE date_diff('second', start_time, end_time) END AS elapsed_time,
         CASE
-            WHEN km > 1
-            THEN max_distance - km_start_distance 
-            ELSE max_distance END AS distance_km,
+            WHEN unit > 1
+            THEN max_distance - unit_start_distance 
+            ELSE max_distance END AS distance_unit,
         CASE
-            WHEN km > 1
-            THEN (km_start_distance + distance_km / 2)
-            ELSE (distance_km / 2) END AS midpoint,
+            WHEN unit > 1
+            THEN (unit_start_distance + distance_unit / 2)
+            ELSE (distance_unit / 2) END AS midpoint,
         elevation_gain,
         elevation_loss,
         avg_heart_rate,
         max_heart_rate,
         avg_cadence,
         max_cadence
-    FROM km_data_stage_2
-    ORDER BY km
+    FROM unit_data_stage_2
+    ORDER BY unit
 )
 
 SELECT
-    km,
-    distance_km AS distance,
+    unit AS {unit},
+    distance_unit AS distance,
     CASE
         WHEN elapsed_time == 0
         THEN 0
-        ELSE (distance_km / elapsed_time * 3600) END AS avg_speed,
+        ELSE (distance_unit / elapsed_time * 3600) END AS avg_speed,
     CASE 
         WHEN avg_speed == 0
         THEN NULL
@@ -88,5 +88,5 @@ SELECT
     max_heart_rate,
     avg_cadence,
     max_cadence
-FROM km_data_stage_3
-ORDER BY km;
+FROM unit_data_stage_3
+ORDER BY unit;

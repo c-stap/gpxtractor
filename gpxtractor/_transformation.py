@@ -30,6 +30,17 @@ def query_table(arrow_table: pa.Table, sql_file: str) -> pa.Table:
     return duckdb.sql(sql_query).arrow().read_all()
 
 
+def query_split_table(
+    arrow_table: pa.Table, sql_file: str, distance_unit: str
+) -> pa.Table:
+    sql_path = files("gpxtractor.sql").joinpath(sql_file)
+    safe_table_name = get_var_name(arrow_table)
+    sql_query = sql_path.read_text().format(
+        table_name=safe_table_name, unit=distance_unit
+    )
+    return duckdb.sql(sql_query).arrow().read_all()
+
+
 def compute_distance_and_speed(arrow_table: pa.Table) -> pa.Table:
     sql_haversine_file = files("gpxtractor.sql").joinpath("haversine_formula.sql")
     haversine_formula = sql_haversine_file.read_text()
@@ -43,17 +54,22 @@ def compute_speed(arrow_table: pa.Table) -> pa.Table:
     return query_table(arrow_table, sql_file)
 
 
-def preprocess_data(arrow_table: pa.Table) -> pa.Table:
-    sql_file = "preprocess_data.sql"
+def preprocess_data(arrow_table: pa.Table, sport: str, units: str) -> pa.Table:
+    match (sport, units):
+        case ("running", "metric"):
+            sql_file = "preprocess_running_data.sql"
+        case ("running", "imperial"):
+            sql_file = "preprocess_running_data_imperial.sql"
+        case (_, "metric"):
+            sql_file = "preprocess_running_data.sql"
+        case (_, "imperial"):
+            sql_file = "preprocess_running_data_imperial.sql"
+        case _:
+            raise ValueError("units parameter must be either 'metric' or 'imperial'")
     return query_table(arrow_table, sql_file)
 
 
-def preprocess_running_data(arrow_table: pa.Table) -> pa.Table:
-    sql_file = "preprocess_running_data.sql"
-    return query_table(arrow_table, sql_file)
-
-
-def transform_data(arrow_table: pa.Table, sport: str) -> pa.Table:
+def transform_data(arrow_table: pa.Table, sport: str, units: str) -> pa.Table:
     REQUIRED_COLUMNS = {
         "timestamp": pa.timestamp("us"),
         "latitude": pa.float32(),
@@ -73,17 +89,14 @@ def transform_data(arrow_table: pa.Table, sport: str) -> pa.Table:
         arrow_table, "speed"
     ):
         arrow_table = compute_speed(arrow_table)
-    if sport == "running":
-        arrow_table = preprocess_running_data(arrow_table)
-    else:
-        arrow_table = preprocess_data(arrow_table)
+    arrow_table = preprocess_data(arrow_table, sport, units)
 
     return arrow_table
 
 
-def compute_km_data(arrow_table: pa.Table) -> pd.DataFrame:
-    sql_file = "km_data_query.sql"
-    arrow_table = query_table(arrow_table, sql_file)
+def compute_split_data(arrow_table: pa.Table, distance_unit: str) -> pd.DataFrame:
+    sql_file = "split_data_query.sql"
+    arrow_table = query_split_table(arrow_table, sql_file, distance_unit)
     return arrow_table.to_pandas(types_mapper=pd.ArrowDtype)
 
 
@@ -99,7 +112,7 @@ def compute_overall_stats(arrow_table: pa.Table):
     return arrow_table.to_pandas(types_mapper=pd.ArrowDtype)
 
 
-# === Specific transformation functions for the TUI ===
+# === Transformation functions for the TUI ===
 def _bin_records(df: pd.DataFrame, sql_file: str, n_bins: int) -> pd.DataFrame:
     sql_path = files("gpxtractor.sql").joinpath(sql_file)
     safe_table_name = get_var_name(df)

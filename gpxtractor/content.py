@@ -23,6 +23,11 @@ _  _ _ _    ____ _  _ ____ ___ ____ ____    ____ ___  _    _ ___ ____
 |_/  | |    |  | |\/| |___  |  |__/ |___    [__  |__] |    |  |  [__
 | \_ | |___ |__| |  | |___  |  |  \ |___    ___] |    |___ |  |  ___]
 """
+MILE_SPLITS_TITLE = r"""
+_  _ _ _    ____    ____ ___  _    _ ___ ____
+|\/| | |    |___    [__  |__] |    |  |  [__
+|  | | |___ |___    ___] |    |___ |  |  ___]
+"""
 LAPS_TITLE = r"""
 _    ____ ___  ____
 |    |__| |__] [__
@@ -51,17 +56,20 @@ def create_page_header(activity: gpxtractor.Activity):
     return output
 
 
-def get_km_table(activity):
-    output = titlefonts_to_lines(KM_SPLITS_TITLE)
-    output += create_splits_table(activity, "km_splits")
+def get_splits_table(activity):
+    title = KM_SPLITS_TITLE
+    if activity.units.get("unit_system") == "imperial":
+        title = MILE_SPLITS_TITLE
+    output = titlefonts_to_lines(title)
+    output += create_splits_table(activity, "splits")
     return output
 
 
 def get_lap_table(activity):
     output = titlefonts_to_lines(LAPS_TITLE)
     lap_table = ["No lap data"]
-    if activity.lap_splits is not None:
-        lap_table = create_splits_table(activity, "lap_splits")
+    if activity.laps is not None:
+        lap_table = create_splits_table(activity, "laps")
     output += lap_table
     return output
 
@@ -81,6 +89,6 @@ def create_pages(activity: gpxtractor.Activity):
     page_1_time += draw_all_area_charts_for_x(activity, "elapsed_time")
     page_1_distance += draw_all_area_charts_for_x(activity, "distance")
 
-    page_2 += get_km_table(activity)
+    page_2 += get_splits_table(activity)
     page_3 += get_lap_table(activity)
     return pages

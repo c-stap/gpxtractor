@@ -23,6 +23,11 @@ def parse_args():
         help="Input file (required for default usage, except with --version or --help).",
     )
     parser.add_argument(
+        "--imperial",
+        action="store_true",
+        help="Use imperial units instead of default metric system.",
+    )
+    parser.add_argument(
         "--raw",
         action="store_true",
         help="Display the data as extracted in visidata.",
@@ -38,7 +43,7 @@ def parse_args():
         help="Display the sport or activity type of the file.",
     )
     parser.add_argument(
-        "--kms",
+        "--splits",
         action="store_true",
         help="Display aggregated stats grouped by kilometer in visidata.",
     )
@@ -71,17 +76,20 @@ def main():
         visidata.vd.view_pandas(df=activity.records)
         return
 
-    activity.full_transform()
+    if args.imperial:
+        activity.full_transform(units="imperial")
+    else:
+        activity.full_transform()
 
     if args.sport:
         print(activity.sport)
     elif args.transform:
         visidata.vd.view_pandas(df=activity.records)
-    elif args.kms:
-        visidata.vd.view_pandas(df=activity.km_splits)
+    elif args.splits:
+        visidata.vd.view_pandas(df=activity.splits)
     elif args.laps:
-        if activity.lap_splits is not None:
-            visidata.vd.view_pandas(df=activity.lap_splits)
+        if activity.laps is not None:
+            visidata.vd.view_pandas(df=activity.laps)
         else:
             print("No laps in file")
     else:
