@@ -94,7 +94,7 @@ def draw_area_chart(
     colour: str,
     height_nlines: int = 10,
     width_nchar: int = 100,
-    ytick_nchar: int = 6,
+    ytick_nchar: int = 7,
     ytick_decimals: int = 1,
 ) -> list[str]:
     # Char resolution to braille dot resolution
@@ -135,9 +135,7 @@ def draw_area_chart(
                 text = f"{maxy_tick}│" + style_text(line, colour=colour)
             text += trail_blanks(text, total_width_nchar)
             output_lines.append(text)
-        x_axis_str = (
-            f"{miny_tick}└" + ("┬" + "─" * 19) * 5 + "┬"
-        )
+        x_axis_str = f"{miny_tick}└" + ("┬" + "─" * 19) * 5 + "┬"
         output_lines.append(x_axis_str)
 
         xticks = []
@@ -171,7 +169,7 @@ def draw_all_area_charts_for_x(
     x: str,
     height_nlines: int = 10,
     width_nchar: int = 100,
-    ytick_nchar: int = 6,
+    ytick_nchar: int = 7,
     ytick_decimals: int = 1,
 ) -> list[str]:
 
