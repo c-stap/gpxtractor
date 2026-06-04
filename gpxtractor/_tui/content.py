@@ -1,7 +1,7 @@
 import gpxtractor
-from gpxtractor.area_graphs import draw_all_area_charts_for_x
-from gpxtractor.tables import create_splits_table, create_summary_table
-from gpxtractor.ansi_styling import (
+from gpxtractor._tui.area_graphs import draw_all_area_charts_for_x
+from gpxtractor._tui.tables import create_splits_table, create_summary_table
+from gpxtractor._tui.ansi_styling import (
     style_text,
     len_ansifree,
     ljust_ansifree,

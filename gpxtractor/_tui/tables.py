@@ -1,7 +1,7 @@
 import pandas as pd
 
 import gpxtractor
-from gpxtractor.ansi_styling import (
+from gpxtractor._tui.ansi_styling import (
     style_text,
     len_ansifree,
     centre_ansifree,

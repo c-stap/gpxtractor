@@ -3,7 +3,7 @@ import tty
 import termios
 import os
 
-from gpxtractor.ansi_styling import centre_ansifree
+from gpxtractor._tui.ansi_styling import centre_ansifree
 
 # TODO: make tui responsive to terminal resizing without having to press key
 # TODO: impose minimum width or enable horizontal scrolling

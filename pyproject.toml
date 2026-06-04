@@ -32,7 +32,7 @@ gpxtractor = "gpxtractor.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["gpxtractor*", "gpxtractor.sql*"]
+include = ["gpxtractor*", "gpxtractor._tui*", "gpxtractor.sql*"]
 
 [tool.setuptools.package-data]
 gpxtractor = ["sql/*.sql"]

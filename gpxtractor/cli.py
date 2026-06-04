@@ -4,8 +4,8 @@ import argparse
 import visidata
 
 import gpxtractor
-from gpxtractor.content import create_pages
-import gpxtractor.tui_framework as tui
+from gpxtractor._tui.content import create_pages
+import gpxtractor._tui.tui_framework as tui
 
 
 def parse_args():

@@ -5,7 +5,7 @@ import numpy as np
 from pandas.api.types import is_integer_dtype
 
 import gpxtractor
-from gpxtractor.ansi_styling import style_text
+from gpxtractor._tui.ansi_styling import style_text
 from gpxtractor._transformation import bin_records_by_distance, bin_records_by_time
 
 
