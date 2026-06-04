@@ -25,7 +25,10 @@ def parse_args():
     parser.add_argument(
         "--imperial",
         action="store_true",
-        help="Use imperial units instead of default metric system.",
+        help="""
+            Use imperial units instead of default metric system.
+            Does not work with the --raw flag.
+        """,
     )
     parser.add_argument(
         "--raw",
@@ -40,12 +43,15 @@ def parse_args():
     parser.add_argument(
         "--sport",
         action="store_true",
-        help="Display the sport or activity type of the file.",
+        help="Display the sport or activity type of the file and exit.",
     )
     parser.add_argument(
         "--splits",
         action="store_true",
-        help="Display aggregated stats grouped by kilometer in visidata.",
+        help="""
+            Display aggregated stats grouped by distance unit in visidata
+            (kilometre by default, or mile if used with the --imperial flag).
+        """,
     )
     parser.add_argument(
         "--laps",
