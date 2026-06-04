@@ -9,4 +9,4 @@ gpx, tcx and fit files and present it in a dataframe.
 __version__ = "0.3.0"
 
 
-from gpxtractor._core import Activity, extract_data
+from gpxtractor.core import Activity, extract_data

@@ -190,16 +190,16 @@ records: <class 'pandas.core.frame.DataFrame'>
 units: <class 'dict'>
 start_time: <class 'pandas._libs.tslibs.timestamps.Timestamp'>
 elapsed_time: <class 'datetime.timedelta'>
-distance: <class 'gpxtractor._core.Stat'>
-avg_speed: <class 'gpxtractor._core.Stat'>
-max_speed: <class 'gpxtractor._core.Stat'>
-avg_pace: <class 'gpxtractor._core.Stat'>
-elevation_gain: <class 'gpxtractor._core.Stat'>
-elevation_loss: <class 'gpxtractor._core.Stat'>
-avg_heart_rate: <class 'gpxtractor._core.Stat'>
-max_heart_rate: <class 'gpxtractor._core.Stat'>
-avg_cadence: <class 'gpxtractor._core.Stat'>
-max_cadence: <class 'gpxtractor._core.Stat'>
+distance: <class 'gpxtractor.core.Stat'>
+avg_speed: <class 'gpxtractor.core.Stat'>
+max_speed: <class 'gpxtractor.core.Stat'>
+avg_pace: <class 'gpxtractor.core.Stat'>
+elevation_gain: <class 'gpxtractor.core.Stat'>
+elevation_loss: <class 'gpxtractor.core.Stat'>
+avg_heart_rate: <class 'gpxtractor.core.Stat'>
+max_heart_rate: <class 'gpxtractor.core.Stat'>
+avg_cadence: <class 'gpxtractor.core.Stat'>
+max_cadence: <class 'gpxtractor.core.Stat'>
 splits: <class 'pandas.core.frame.DataFrame'>
 laps: <class 'pandas.core.frame.DataFrame'>
 is_transformed: <class 'bool'>
@@ -207,7 +207,7 @@ is_transformed: <class 'bool'>
 
 **Units**
 
-Some units will change with the transformation step. It is possible to consult the units for both the columns of the `records`, `splits` and `laps` attributes and the units of the aggregated statistics stored as `gpxtractor.Activity` attributes of type `<class 'gpxtractor._core.Stat'>`. The `gpxtractor._core.Stat` class is designed to hold both numerical value and the associated unit. It has two attributes: `value` and `unit`. The snippets below show how you can access the value and unit of the aggregate statistics of a `gpxtractor.Activity instance`.
+Some units will change with the transformation step. It is possible to consult the units for both the columns of the `records`, `splits` and `laps` attributes and the units of the aggregated statistics stored as `gpxtractor.Activity` attributes of type `<class 'gpxtractor.core.Stat'>`. The `gpxtractor.core.Stat` class is designed to hold both numerical value and the associated unit. It has two attributes: `value` and `unit`. The snippets below show how you can access the value and unit of the aggregate statistics of a `gpxtractor.Activity instance`.
 
 ```console
 >>> activity.max_speed
