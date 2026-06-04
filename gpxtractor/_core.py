@@ -42,7 +42,6 @@ class Stat:
 
 @dataclass
 class Activity:
-    # TODO: add units attribute to docstring
     """Stores and manages records and metadata parsed from a gpx, tcx or
     fit file.
 
@@ -68,8 +67,10 @@ class Activity:
     is_transformed : bool
         initially False, becomes True once either the method
         `transform_records` or `full_transform` is used.
+
     units : None or dict
         A dictionary containing the units used for each metric.
+
     file_type : str
         Can be any of the following: 'GPX', 'TCX' or 'FIT'.
         Corresponds to the type of the file for which the instance of the

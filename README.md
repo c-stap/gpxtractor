@@ -24,14 +24,15 @@
   - If **distance** or **speed** are not present in the original file, they are computed.
   - If the file contains altitude data, **gradient** and **diff_altitude** (the incremental difference in altitude between two rows) are computed.
 - **Converts units**:
-  - **Distance**: km
-  - **Speed**: km/h
-  - **Pace**: min/km
+  - **Distance**: km (default) or mi
+  - **Speed**: km/h (default) or mph
+  - **Pace**: min/km (default) or min/mi
+  - **Altitude/Elevation**: m (default) or ft
 - **Cadence handling**:
   - If the sport is `"running"`: steps per minute (spm)
   - For all other sports: revolutions per minute (rpm)
 - **Calculates aggregated data grouped by splits**
-  - by kilometre split
+  - by split: kilometre splits (default) or mile splits
   - by lap
 - **Calculates aggregate statistics for the whole file**
   - `start_time`
@@ -80,6 +81,10 @@ pip install visidata
 The default usage of the CLI without flags, opens a 3-page TUI with data visuals for a quick analysis of the file.
 ```bash
 gpxtractor <filename.gpx>  # or .tcx, .fit, .gpx.gz, .tcx.gz, .fit.gz
+```
+Or if you prefer imperial units:
+```bash
+gpxtractor <filename.gpx> --imperial
 ```
 
 - Press `1` for the first page with area charts showing altitude, speed, heart rate and cadence (if available) over elapsed time.
@@ -138,6 +143,11 @@ activity.full_transform()
 print(activity.records.head())
 ```
 
+Or if you prefer imperial units:
+```python
+activity.full_transform(units="imperial")
+```
+
 You can check that the activity has been transformed with:
 ```python
 activity.is_transformed  # returns a bool
@@ -159,13 +169,13 @@ print(activity.avg_cadence)
 print(activity.max_cadence)
 ```
 
-The `full_transform` method also calculates data aggregated by kilometre split and by lap which are accessible with the `km_splits` and `lap_splits` attributes respectively.
+The `full_transform` method also calculates data aggregated by kilometre split and by lap which are accessible with the `splits` and `laps` attributes respectively.
 
 ```python
-print(activity.km_splits.head())
-print(activity.lap_splits.head())
+print(activity.splits.head())
+print(activity.laps.head())
 ```
-*Note: `full_transform` will only compute lap splits if the file contains lap data which is not the case for GPX files, in which case `lap_splits` attribute is `None`.*
+*Note: `full_transform` will only compute lap splits if the file contains lap data which is not the case for GPX files, in which case `laps` attribute is `None`.*
 
 
 Below are all the attributes of a gpxtractor.Activity instance and their types:
@@ -190,14 +200,14 @@ avg_heart_rate: <class 'gpxtractor._core.Stat'>
 max_heart_rate: <class 'gpxtractor._core.Stat'>
 avg_cadence: <class 'gpxtractor._core.Stat'>
 max_cadence: <class 'gpxtractor._core.Stat'>
-km_splits: <class 'pandas.core.frame.DataFrame'>
-lap_splits: <class 'pandas.core.frame.DataFrame'>
+splits: <class 'pandas.core.frame.DataFrame'>
+laps: <class 'pandas.core.frame.DataFrame'>
 is_transformed: <class 'bool'>
 ```
 
 **Units**
 
-Some units will change with the transformation step. It is possible to consult the units for both the columns of the `records`, `km_splits` and `lap_splits` attributes and the units of the aggregated statistics stored as `gpxtractor.Activity` attributes of type `<class 'gpxtractor._core.Stat'>`. The `gpxtractor._core.Stat` class is designed to hold both numerical value and the associated unit. It has two attributes: `value` and `unit`. The snippets below show how you can access the value and unit of the aggregate statistics of a `gpxtractor.Activity instance`.
+Some units will change with the transformation step. It is possible to consult the units for both the columns of the `records`, `splits` and `laps` attributes and the units of the aggregated statistics stored as `gpxtractor.Activity` attributes of type `<class 'gpxtractor._core.Stat'>`. The `gpxtractor._core.Stat` class is designed to hold both numerical value and the associated unit. It has two attributes: `value` and `unit`. The snippets below show how you can access the value and unit of the aggregate statistics of a `gpxtractor.Activity instance`.
 
 ```console
 >>> activity.max_speed
@@ -216,7 +226,7 @@ Some units will change with the transformation step. It is possible to consult t
 20.88 km/h
 ```
 
-To get the units for the columns of the `pandas.DataFrame` instances stored in the `records`, `km_splits` and `lap_splits` attributes of a gpxtractor.Activity instance, you can use the `get_unit` method as follows:
+To get the units for the columns of the `pandas.DataFrame` instances stored in the `records`, `splits` and `laps` attributes of a gpxtractor.Activity instance, you can use the `get_unit` method as follows:
 ```console
 >>> activity.get_unit("avg_speed")  # replace "avg_speed" with any column name
 'km/h'
@@ -236,6 +246,11 @@ activity.transform_records()
 print(activity.records.head())
 ```
 
+Or if you prefer imperial units:
+```python
+activity.transform_records(units="imperial")
+```
+
 Reminder: you can check that the activity has been transformed.
 ```python
 activity.is_transformed  # returns a bool
@@ -244,21 +259,31 @@ activity.is_transformed  # returns a bool
 And once the records have been transformed with `transform_records`, it is possible to use the 2 following methods to calculate aggregated data for kilometre and lap splits.
 
 ```python
-activity.compute_km_splits()
-print(activity.km_splits)
+activity.compute_splits()
+print(activity.splits)
 
-activity.compute_lap_splits()
-print(activity.lap_splits)
+activity.compute_laps()
+print(activity.laps)
 ```
 
 ## Roadmap
 
 - **Mouse scroll and arrow support for the TUI**: Enhance the terminal user interface for smoother navigation.
 - **Additional metrics**: Expand the available metrics to include power, stride length, and more.
-- **Imperial units support**: Add a parameter to the `full_transform()` method to allow users to opt for imperial units.
 
 ## Version History
 
+- **v0.3.0** ():
+    - Added option to use imperial units instead of the metric system for the transformation stage:
+        - in the CLI: with the `--imperial` flag
+        - in the Python API: by setting the `units` parameter to `"imperial"` in the `transform_records` and `full_transform` methods.
+    - *Breaking changes*:
+        - `Activity` attributes renamed:
+            - `km_splits` renamed `splits`.
+            - `lap_splits` renamed `laps`.
+        - `Activity` methods renamed:
+            - `comput_km_splits` renamed `compute_splits`.
+            - `compute_lap_splits` renamed `compute_laps`.
 - **v0.2.1** (2026-05-23):
     - Fixed: replaced importlib_resources with standard module importlib.resources as it was not specified in required dependencies.
 - **v0.2.0** (2026-05-23):
