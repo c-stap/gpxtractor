@@ -14,7 +14,7 @@ TITLE = """
 █ ▀█ █▀▀▀  ▄▀▄    █   █▀█▀ █▀▀█ █     █   █  █ █▀█▀
 ▀▀▀▀ ▀    ▀   ▀   ▀   ▀ ▀▀ ▀  ▀ ▀▀▀   ▀   ▀▀▀▀ ▀ ▀▀
 """
-INSTRUCTIONS = "PRESS 1 FOR CHARTS, 2 FOR KILOMETRE SPLITS, 3 FOR LAPS"
+INSTRUCTIONS = "PRESS 1 FOR CHARTS, 2 FOR SPLITS, 3 FOR LAPS"
 INSTRUCTIONS_CHARTS = "PRESS l FOR DISTANCE ON X-AXIS, h FOR TIME ON X-AXIS"
 
 # Following font 'cybermedium' generated with `art` python library

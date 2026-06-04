@@ -90,7 +90,7 @@ gpxtractor <filename.gpx> --imperial
 - Press `1` for the first page with area charts showing altitude, speed, heart rate and cadence (if available) over elapsed time.
     - Press `l` to switch from elapsed time to distance on the x-axis.
     - Press `h` to switch back to elapsed time on the x-axis.
-- Press `2` for the second page with a table of data aggregated by kilometre split.
+- Press `2` for the second page with a table of data aggregated by split (by kilometre or mile).
 - Press `3` for the third page with a table of data aggregated by lap.
 
 For all pages:
