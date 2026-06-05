@@ -3,7 +3,6 @@
 **GPX, TCX and FIT data extraction and transformation for Python**
 
 [![PyPI version](https://img.shields.io/pypi/v/gpxtractor.svg)](https://pypi.org/project/gpxtractor/)   
-[![codecov](https://img.shields.io/codecov/c/github/c-stap/gpxtractor.svg?label=codecov)](https://codecov.io/github/c-stap/gpxtractor)   
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Description
