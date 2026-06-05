@@ -3,6 +3,7 @@
 **GPX, TCX and FIT data extraction and transformation for Python**
 
 [![PyPI version](https://img.shields.io/pypi/v/gpxtractor.svg)](https://pypi.org/project/gpxtractor/)   
+[![codecov](https://img.shields.io/codecov/c/github/c-stap/gpxtractor.svg?label=codecov)](https://codecov.io/github/c-stap/gpxtractor)   
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Description
@@ -273,7 +274,7 @@ print(activity.laps)
 
 ## Version History
 
-- **v0.3.0** ():
+- **v0.3.0** (2026-06-05):
     - Added option to use imperial units instead of the metric system for the transformation stage:
         - in the CLI: with the `--imperial` flag
         - in the Python API: by setting the `units` parameter to `"imperial"` in the `transform_records` and `full_transform` methods.
