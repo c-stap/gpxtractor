@@ -102,7 +102,7 @@ For all pages:
 - Press `G` for bottom of page
 - Press `q` to quit
 
-![TUI Demo](https://raw.githubusercontent.com/c-stap/gpxtractor/main/assets/demo.GIF)
+![TUI Demo](https://raw.githubusercontent.com/c-stap/gpxtractor/main/assets/demo.gif)
 
 For the full list of flags and what they do, run
 ```bash
